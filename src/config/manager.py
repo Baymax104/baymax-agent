@@ -3,7 +3,7 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
-from config.models import Configuration, RemoteServerConfig, ServerConfig, StdioServerConfig
+from config.models import Configuration, RemoteServerConfig, StdioServerConfig
 
 
 class ConfigManager:
@@ -24,10 +24,14 @@ class ConfigManager:
 
     @classmethod
     def __init_config(cls) -> Configuration:
-        instances = {
+        servers = {
             "stdio_server_name": StdioServerConfig(command=""),
             "remote_server_name": RemoteServerConfig(url=""),
         }
-        server_config = ServerConfig(instances=instances)
-        configuration = Configuration(server=server_config)
+        configuration = Configuration(servers=servers)
         return configuration
+
+
+if __name__ == "__main__":
+    c = ConfigManager.get_config()
+    print(c)

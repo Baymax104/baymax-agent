@@ -8,9 +8,11 @@ class BaseConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
-class APIConfig(BaseConfig):
+class ModelConfig(BaseConfig):
+    provider: str | None = None
+    model: str | None = None
     api_key: str | None = None
-    base_url: str | None = None
+    generation: dict[str, Any] | None = None
 
 
 class StdioServerConfig(BaseConfig):
@@ -26,11 +28,6 @@ class RemoteServerConfig(BaseConfig):
     auth: str | Literal["oauth"] | None = None
 
 
-class ServerConfig(BaseConfig):
-    default: str | None = None
-    instances: dict[str, StdioServerConfig | RemoteServerConfig]
-
-
 class Configuration(BaseConfig):
-    api: APIConfig = APIConfig()
-    server: ServerConfig
+    model: ModelConfig = ModelConfig()
+    servers: dict[str, StdioServerConfig | RemoteServerConfig]
