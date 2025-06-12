@@ -1,0 +1,15 @@
+api:
+  api_key:
+  base_url:
+server:
+  default:
+  instances:
+    stdio_server_name:
+      command: ''
+      args: []
+      env: {}
+      cwd:
+    remote_server_name:
+      url: ''
+      headers: {}
+      auth:
