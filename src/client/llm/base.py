@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from abc import ABC, abstractmethod
+from typing import Self
 
 from langchain_core.messages import BaseMessage
 
@@ -17,5 +18,9 @@ class LLMProvider(ABC):
             raise ValueError("Missing model")
 
     @abstractmethod
-    def generate(self, messages: list[BaseMessage], *, tools: list | None = None) -> list[BaseMessage]:
+    def with_tools(self, tools: list) -> Self:
+        ...
+
+    @abstractmethod
+    def generate(self, messages: list[BaseMessage]) -> BaseMessage:
         ...

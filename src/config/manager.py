@@ -31,7 +31,3 @@ class ConfigManager:
         configuration = Configuration(servers=ServerConfig(root=servers))
         return configuration
 
-
-if __name__ == "__main__":
-    c = ConfigManager.get_config()
-    print(c)

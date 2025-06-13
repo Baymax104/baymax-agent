@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+from typing import Self
+
 from langchain_core.messages import BaseMessage
 from langchain_deepseek import ChatDeepSeek
 
@@ -17,8 +19,9 @@ class DeepSeek(LLMProvider):
             **generation
         )
 
-    def generate(self, messages: list[BaseMessage], *, tools: list | None = None):
-        llm = self.llm.bind_tools(tools) if tools else self.llm
-        ai_message = llm.invoke(messages)
-        messages.append(ai_message)
-        return messages
+    def with_tools(self, tools: list) -> Self:
+        self.llm.bind_tools(tools)
+        return self
+
+    def generate(self, messages: list[BaseMessage]) -> BaseMessage:
+        return self.llm.invoke(messages)

@@ -22,5 +22,5 @@ def test_llm(provider, model, api_key):
 
     llm = LLMFactory.create(model_config)
     messages: list[BaseMessage] = [HumanMessage("Hello")]
-    messages = llm.generate(messages)
-    print(messages[-1])
+    message = llm.generate(messages)
+    print(message)
