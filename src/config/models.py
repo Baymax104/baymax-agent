@@ -1,10 +1,11 @@
 # -*- coding: UTF-8 -*-
 import sys
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
-from pydantic import BaseModel, ConfigDict, RootModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BaseConfig(BaseModel):
@@ -18,7 +19,16 @@ class ModelConfig(BaseConfig):
     generation: dict[str, Any] | None = None
 
 
-class StdioServerConfig(BaseConfig):
+class BaseInstanceConfig(BaseConfig, ABC):
+    name: str
+    description: str
+
+    @abstractmethod
+    def to_mcp(self) -> StdioMCPServer | RemoteMCPServer:
+        ...
+
+
+class StdioInstanceConfig(BaseInstanceConfig):
     script: str
     args: list[str] = []
     env: dict[str, Any] = {}
@@ -44,27 +54,30 @@ class StdioServerConfig(BaseConfig):
         )
 
 
-class RemoteServerConfig(BaseConfig):
+class RemoteInstanceConfig(BaseInstanceConfig):
     url: str
     headers: dict[str, str] = {}
     auth: str | Literal["oauth"] | None = None
 
     def to_mcp(self) -> RemoteMCPServer:
-        return RemoteMCPServer(**self.model_dump())
+        return RemoteMCPServer(
+            url=self.url,
+            headers=self.headers,
+            auth=self.auth,
+        )
 
 
-class ServerConfig(RootModel):
-    root: dict[str, StdioServerConfig | RemoteServerConfig]
+class ServerConfig(BaseConfig):
+    instances: list[StdioInstanceConfig | RemoteInstanceConfig]
 
     def to_mcp(self) -> MCPConfig:
         mcp_servers = {
-            server: server_config.to_mcp()
-            for server, server_config in self.root.items()
+            server_config.name: server_config.to_mcp()
+            for server_config in self.instances
         }
         return MCPConfig(mcpServers=mcp_servers)
 
 
-
 class Configuration(BaseConfig):
     model: ModelConfig = ModelConfig()
-    servers: ServerConfig = ServerConfig(root={})
+    server: ServerConfig = ServerConfig(instances=[])

@@ -3,14 +3,16 @@ model:
   model:
   api_key:
   generation:
-
-servers:
-  stdio_server_name:
-    command: ''
+server:
+  instances:
+  - name: ''
+    description: ''
+    script: ''
     args: []
     env: {}
     cwd:
-  remote_server_name:
+  - name: ''
+    description: ''
     url: ''
     headers: {}
     auth:
