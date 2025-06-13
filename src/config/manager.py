@@ -7,17 +7,17 @@ from config.models import Configuration, RemoteServerConfig, StdioServerConfig
 
 
 class ConfigManager:
-    __config_path: Path = Path(__file__).parent.parent.parent / "config.yml"
+    config_path: Path = Path(__file__).parent.parent.parent / "config.yml"
 
     @classmethod
     def get_config(cls) -> Configuration:
-        if not cls.__config_path.exists():
+        if not cls.config_path.exists():
             configuration = cls.__init_config()
-            with cls.__config_path.open("w", encoding="utf-8") as f:
+            with cls.config_path.open("w", encoding="utf-8") as f:
                 YAML().dump(configuration.model_dump(), f)
             return configuration
 
-        with cls.__config_path.open("r", encoding="utf-8") as f:
+        with cls.config_path.open("r", encoding="utf-8") as f:
             configuration = YAML().load(f)
         configuration = Configuration.model_validate(configuration)
         return configuration

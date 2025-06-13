@@ -10,10 +10,11 @@ class DeepSeek(LLMProvider):
 
     def __init__(self, config: ModelConfig):
         super().__init__(config)
+        generation = config.generation if config.generation else {}
         self.llm = ChatDeepSeek(
             model=config.model,
             api_key=config.api_key,
-            **config.generation
+            **generation
         )
 
     def generate(self, messages: list[BaseMessage], *, tools: list | None = None):
