@@ -1,0 +1,103 @@
+# -*- coding: UTF-8 -*-
+from abc import ABC, abstractmethod
+from typing import Callable, Type
+
+from fastmcp import Client as MCPClient
+from langchain_core.messages import AIMessage, ToolMessage
+from langgraph.graph import add_messages
+from mcp.types import TextContent
+from pydantic import BaseModel, ConfigDict
+
+from client.graph.state import State, ToolState
+from client.llm import LLMProvider
+
+
+class Node[Input, Output](ABC, BaseModel):
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
+    input_type: Type[Input]
+    output_type: Type[Output]
+
+    @abstractmethod
+    def __call__(self, state: Input) -> Output:
+        ...
+
+
+# noinspection PyTypeChecker
+class StateNode[Input: State, Output: State](Node[Input, Output], ABC):
+    input_type: Type[Input] = State
+    output_type: Type[Output] = State
+
+    @abstractmethod
+    async def __call__(self, state: Input) -> Output:
+        ...
+
+
+# noinspection PyTypeChecker
+class LLMNode[Input: State, Output: State](StateNode[Input, Output], ABC):
+    llm: LLMProvider
+
+
+# noinspection PyTypeChecker
+class ChatNode[Input: State, Output: State](LLMNode[Input, Output]):
+
+    async def __call__(self, state: Input) -> Output:
+        messages = await self.llm.generate_async(state.messages)
+        messages = add_messages(state.messages, [messages])
+        return self.output_type(messages=messages)
+
+
+# noinspection PyTypeChecker
+class FunctionCallNode[Input: ToolState, Output: ToolState](LLMNode[Input, Output]):
+    client: MCPClient
+
+    async def __call__(self, state: Input) -> Output:
+        async with self.client:
+            tools = await self.client.list_tools()
+        server_tools = [tool for tool in tools if tool.name.startswith(state.server)]
+        if not server_tools:
+            server_tools = tools  # use all tools if only single server is connected
+        ai_message = await self.llm.generate_async(state.messages, tools=server_tools)
+        return ToolState(
+            messages=add_messages(state.messages, [ai_message]),
+            server=state.server,
+            tool_calls=ai_message.tool_calls
+        )
+
+
+# noinspection PyTypeChecker
+class ToolExecuteNode[Input: ToolState, Output: State](StateNode[Input, Output]):
+    client: MCPClient
+
+    async def __call__(self, state: Input) -> Output:
+        if not isinstance(state.messages[-1], AIMessage):
+            raise ValueError(f"Last message is not an AIMessage")
+        if not state.server or not state.tool_calls:
+            raise ValueError(f"Server and tool calls are empty")
+        async with self.client:
+            tool_call = state.tool_calls[0]  # Usually there is only one tool_call
+            results = await self.client.call_tool(tool_call["name"], tool_call["args"])
+        result = results[0]
+        if not isinstance(result, TextContent):
+            raise ValueError(f"{tool_call['name']} returned {type(result)}")
+        tool_message = ToolMessage(result.text, tool_call_id=tool_call["id"])
+        return State(messages=add_messages(state.messages, [tool_message]))
+
+
+# noinspection PyTypeChecker
+class MapNode[Input: State, Output: State](StateNode[Input, Output]):
+    transform: Callable[[Input], Output]
+
+    async def __call__(self, state: Input) -> Output:
+        return self.transform(state)
+
+
+type NodeName = str
+
+
+# noinspection PyTypeChecker
+class RouteNode[Input: State](Node[Input, NodeName]):
+    router: Callable[[Input], NodeName]
+
+    def __call__(self, state: Input) -> NodeName:
+        return self.router(state)
