@@ -27,13 +27,15 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "hatchling>=1.27.0",
+    "icecream>=2.1.4",
     "pytest>=8.4.0",
 ]
 
 
 [tool.hatch.build.targets.wheel]
 packages = [
-    "src/clients",
+    "src/client",
     "src/config",
-    "src/servers"
+    "src/servers",
+    "src/ui"
 ]
