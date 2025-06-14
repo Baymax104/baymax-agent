@@ -2,7 +2,8 @@
 from abc import ABC, abstractmethod
 from typing import Self
 
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AnyMessage
+from mcp import Tool
 
 from config import ModelConfig
 
@@ -16,11 +17,19 @@ class LLMProvider(ABC):
             raise ValueError("Missing API key")
         if self.config.model is None:
             raise ValueError("Missing model")
+        self.llm = None
+
+    def bind_tools(self, tools: list) -> Self:
+        """bind tools for a llm instance"""
+        self.llm = self.llm.bind_tools(tools)
+        return self
 
     @abstractmethod
-    def with_tools(self, tools: list) -> Self:
+    def generate(self, messages: list[AnyMessage], *, tools: list[Tool] | None = None) -> AnyMessage:
+        """generate an AI message. if tools are provided, llm will use these tools in this generation."""
         ...
 
     @abstractmethod
-    def generate(self, messages: list[BaseMessage]) -> BaseMessage:
+    async def generate_async(self, messages: list[AnyMessage], *, tools: list[Tool] | None = None) -> AnyMessage:
+        """generate an AI message. if tools are provided, llm will use these tools in this generation."""
         ...
