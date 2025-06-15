@@ -6,14 +6,14 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.constants import END, START
 from langgraph.pregel import Pregel
 
-from client.graph import GraphBuilder, GraphConfig
-from client.graph.nodes import ChatNode, FunctionCallNode, ToolExecuteNode
-from client.graph.state import ToolState
-from client.llm import LLMFactory
+from agent.graph import GraphBuilder, GraphConfig
+from agent.graph.nodes import ChatNode, FunctionCallNode, ToolExecuteNode
+from agent.graph.state import ToolState
+from agent.llm import LLMFactory
 from config import Configuration
 
 
-class MCPController:
+class ToolAgent:
 
     def __init__(self, config: Configuration):
         self.config = config
@@ -58,7 +58,6 @@ class MCPController:
         )
         builder.from_config(graph_config)
         self.graph = builder.compile()
-        pass
 
     async def __ping_mcp_server(self):
         async with self.mcp_client:

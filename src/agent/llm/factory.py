@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
-from client.llm.base import LLMProvider
-from client.llm.deepseek import DeepSeek
-from client.llm.zhipuai import ZhipuAI
+from agent.llm.base import LLMProvider
+from agent.llm.deepseek import DeepSeek
+from agent.llm.zhipuai import ZhipuAI
 from config import ModelConfig
 
 

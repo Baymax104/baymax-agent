@@ -9,8 +9,8 @@ from langgraph.graph import add_messages
 from mcp.types import TextContent
 from pydantic import BaseModel, ConfigDict
 
-from client.graph.state import State, ToolState
-from client.llm import LLMProvider
+from agent.graph.state import State, ToolState
+from agent.llm import LLMProvider
 
 
 class Node[Input, Output](ABC, BaseModel):

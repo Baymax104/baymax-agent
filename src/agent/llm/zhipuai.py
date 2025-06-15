@@ -1,19 +1,19 @@
 # -*- coding: UTF-8 -*-
+from langchain_community.chat_models import ChatZhipuAI
 from langchain_core.messages import AnyMessage
-from langchain_deepseek import ChatDeepSeek
 from mcp import Tool
 
-from client.llm.base import LLMProvider
-from client.llm.utils import convert_to_openai_tools
+from agent.llm.base import LLMProvider
+from agent.llm.utils import convert_to_openai_tools
 from config import ModelConfig
 
 
-class DeepSeek(LLMProvider):
+class ZhipuAI(LLMProvider):
 
     def __init__(self, config: ModelConfig):
         super().__init__(config)
         generation = config.generation if config.generation else {}
-        self.llm = ChatDeepSeek(
+        self.llm = ChatZhipuAI(
             model=config.model,
             api_key=config.api_key,
             **generation
