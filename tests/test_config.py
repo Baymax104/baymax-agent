@@ -12,3 +12,12 @@ def test_get_config():
     config_ = ConfigManager.get_config()
     print(config_)
 
+
+def test_secret_config():
+    from dynaconf import Dynaconf
+    settings = Dynaconf(
+        root_path=Path(__file__).parent.parent,
+        settings_file=["config.yml", ".secrets.*"],
+    )
+    settings = settings.as_dict()
+    print(settings)

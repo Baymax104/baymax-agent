@@ -13,6 +13,7 @@ dependencies = [
     "ruamel-yaml>=0.18.14",
     "loguru>=0.7.3",
     "langgraph>=0.4.8",
+    "dynaconf>=3.2.11",
 ]
 
 [[tool.uv.index]]

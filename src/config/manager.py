@@ -1,13 +1,19 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
 
+from dynaconf import Dynaconf
 from ruamel.yaml import YAML
 
-from config.models import Configuration, RemoteInstanceConfig, ServerConfig, StdioInstanceConfig
+from config.models import Configuration, ModelConfig, RemoteInstanceConfig, ServerConfig, StdioInstanceConfig
 
 
 class ConfigManager:
-    config_path: Path = Path(__file__).parent.parent.parent / "config.yml"
+    context_root: Path = Path(__file__).parent.parent.parent
+    config_path: Path = context_root / "config.yml"
+    all_config: Dynaconf = Dynaconf(
+        root_path=context_root,
+        settings_files=[config_path.name, ".secrets.*"],
+    )
 
     @classmethod
     def get_config(cls) -> Configuration:
@@ -17,8 +23,7 @@ class ConfigManager:
                 YAML().dump(configuration.model_dump(), f)
             return configuration
 
-        with cls.config_path.open("r", encoding="utf-8") as f:
-            configuration = YAML().load(f)
+        configuration = {"model": cls.all_config.model, "server": cls.all_config.server}
         configuration = Configuration.model_validate(configuration)
         return configuration
 
@@ -28,6 +33,9 @@ class ConfigManager:
             StdioInstanceConfig(name="", description="", script=""),
             RemoteInstanceConfig(name="", description="", url=""),
         ]
-        configuration = Configuration(server=ServerConfig(instances=servers))
+        configuration = Configuration(
+            model=ModelConfig(api_key="@get api_key"),
+            server=ServerConfig(instances=servers)
+        )
         return configuration
 

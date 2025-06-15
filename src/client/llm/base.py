@@ -13,9 +13,9 @@ class LLMProvider(ABC):
     def __init__(self, config: ModelConfig):
         self.config = config
         # validate config
-        if self.config.api_key is None:
+        if not self.config.api_key:
             raise ValueError("Missing API key")
-        if self.config.model is None:
+        if not self.config.model:
             raise ValueError("Missing model")
         self.llm = None
 

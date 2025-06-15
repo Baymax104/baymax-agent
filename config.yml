@@ -1,18 +1,15 @@
 model:
-  provider:
-  model:
-  api_key:
-  generation:
+  provider: zhipuai
+  model: glm-4-flash
+  api_key: "@get api_key"
+
 server:
   instances:
-  - name: ''
-    description: ''
-    script: ''
-    args: []
-    env: {}
-    cwd:
-  - name: ''
-    description: ''
-    url: ''
-    headers: {}
-    auth:
+    - name: calculate
+      description: ''
+      script: "calculate_server.py"
+
+    - name: hello
+      description: ""
+      script: "hello_server.py"
+

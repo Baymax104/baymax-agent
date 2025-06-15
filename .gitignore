@@ -12,3 +12,5 @@ wheels/
 
 tests/*
 !tests/*.py
+
+.secrets.*
