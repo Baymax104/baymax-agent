@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
 from abc import ABC, abstractmethod
-from typing import Callable, Type
+from typing import Any, Callable
 
 from fastmcp import Client as MCPClient
 from langchain_core.messages import AIMessage, ToolMessage
+from langgraph.constants import END, START
 from langgraph.graph import add_messages
 from mcp.types import TextContent
 from pydantic import BaseModel, ConfigDict
@@ -14,9 +15,9 @@ from client.llm import LLMProvider
 
 class Node[Input, Output](ABC, BaseModel):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
-
-    input_type: Type[Input]
-    output_type: Type[Output]
+    name: str
+    input_type: type[Input]
+    output_type: type[Output]
 
     @abstractmethod
     def __call__(self, state: Input) -> Output:
@@ -25,8 +26,8 @@ class Node[Input, Output](ABC, BaseModel):
 
 # noinspection PyTypeChecker
 class StateNode[Input: State, Output: State](Node[Input, Output], ABC):
-    input_type: Type[Input] = State
-    output_type: Type[Output] = State
+    input_type: type[Input] = State
+    output_type: type[Output] = State
 
     @abstractmethod
     async def __call__(self, state: Input) -> Output:
@@ -92,12 +93,29 @@ class MapNode[Input: State, Output: State](StateNode[Input, Output]):
         return self.transform(state)
 
 
-type NodeName = str
+# noinspection PyTypeChecker
+class RouteNode[Input: State](Node[Input, str]):
+    router: Callable[[Input], str]
+
+    def __call__(self, state: Input) -> str:
+        return self.router(state)
 
 
 # noinspection PyTypeChecker
-class RouteNode[Input: State](Node[Input, NodeName]):
-    router: Callable[[Input], NodeName]
+class StartNode(Node[Any, None]):
+    name: str = START
+    input_type: type[Any] = None
+    output_type: type[None] = None
 
-    def __call__(self, state: Input) -> NodeName:
-        return self.router(state)
+    def __call__(self, state: Any):
+        return
+
+
+# noinspection PyTypeChecker
+class EndNode(Node[Any, None]):
+    name: str = END
+    input_type: type[Any] = None
+    output_type: type[None] = None
+
+    def __call__(self, state: Any):
+        return
