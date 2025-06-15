@@ -6,11 +6,9 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.constants import END, START
 from langgraph.pregel import Pregel
 
-from agent.graph import GraphBuilder, GraphConfig
-from agent.graph.nodes import ChatNode, FunctionCallNode, ToolExecuteNode
-from agent.graph.state import ToolState
-from agent.llm import LLMFactory
 from config import Configuration
+from llm import LLMFactory
+from workflow import *
 
 
 class ToolAgent:

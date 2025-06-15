@@ -3,9 +3,9 @@ from langchain_community.chat_models import ChatZhipuAI
 from langchain_core.messages import AnyMessage
 from mcp import Tool
 
-from agent.llm.base import LLMProvider
-from agent.llm.utils import convert_to_openai_tools
 from config import ModelConfig
+from llm.base import LLMProvider
+from llm.utils import convert_to_openai_tools
 
 
 class ZhipuAI(LLMProvider):

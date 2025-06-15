@@ -2,7 +2,7 @@
 from langchain_core.messages import BaseMessage, HumanMessage
 from pytest import mark
 
-from agent.llm import LLMFactory
+from llm import LLMFactory
 from config import ModelConfig
 
 

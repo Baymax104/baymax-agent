@@ -7,8 +7,7 @@ from langgraph.graph import StateGraph
 from langgraph.pregel import Pregel
 from pydantic import BaseModel
 
-from agent.graph import RouteNode
-from agent.graph.nodes import EndNode, Node, StartNode
+from workflow.nodes import EndNode, Node, RouteNode, StartNode
 
 
 Edge = namedtuple("Edge", ["start", "end"])

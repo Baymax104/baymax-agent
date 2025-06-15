@@ -3,9 +3,9 @@ from langchain_core.messages import AnyMessage
 from langchain_deepseek import ChatDeepSeek
 from mcp import Tool
 
-from agent.llm.base import LLMProvider
-from agent.llm.utils import convert_to_openai_tools
 from config import ModelConfig
+from llm.base import LLMProvider
+from llm.utils import convert_to_openai_tools
 
 
 class DeepSeek(LLMProvider):

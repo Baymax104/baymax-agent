@@ -6,10 +6,10 @@ model:
 server:
   instances:
     - name: calculate
-      description: ''
+      description: "提供两个数字的加、减、乘、除四则运算"
       script: "calculate_server.py"
 
-    - name: hello
-      description: ""
-      script: "hello_server.py"
+#    - name: hello
+#      description: ""
+#      script: "hello_server.py"
 

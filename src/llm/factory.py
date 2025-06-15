@@ -1,8 +1,8 @@
 # -*- coding: UTF-8 -*-
-from agent.llm.base import LLMProvider
-from agent.llm.deepseek import DeepSeek
-from agent.llm.zhipuai import ZhipuAI
 from config import ModelConfig
+from llm.base import LLMProvider
+from llm.deepseek import DeepSeek
+from llm.zhipuai import ZhipuAI
 
 
 class LLMFactory:

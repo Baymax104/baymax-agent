@@ -9,8 +9,8 @@ from langgraph.graph import add_messages
 from mcp.types import TextContent
 from pydantic import BaseModel, ConfigDict
 
-from agent.graph.state import State, ToolState
-from agent.llm import LLMProvider
+from llm import LLMProvider
+from workflow.state import State, ToolState
 
 
 class Node[Input, Output](ABC, BaseModel):
@@ -73,8 +73,10 @@ class ToolExecuteNode[Input: ToolState, Output: State](StateNode[Input, Output])
     async def __call__(self, state: Input) -> Output:
         if not isinstance(state.messages[-1], AIMessage):
             raise ValueError(f"Last message is not an AIMessage")
-        if not state.server or not state.tool_calls:
-            raise ValueError(f"Server and tool calls are empty")
+        if not state.server:
+            raise ValueError(f"Server is null")
+        if not state.tool_calls:
+            raise ValueError(f"Tool calls are empty")
         async with self.client:
             tool_call = state.tool_calls[0]  # Usually there is only one tool_call
             results = await self.client.call_tool(tool_call["name"], tool_call["args"])
