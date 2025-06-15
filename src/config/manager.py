@@ -23,7 +23,8 @@ class ConfigManager:
                 YAML().dump(configuration.model_dump(), f)
             return configuration
 
-        configuration = {"model": cls.all_config.model, "server": cls.all_config.server}
+        all_config = cls.all_config.as_dict()
+        configuration = {"model": all_config["MODEL"], "server": all_config["SERVER"]}
         configuration = Configuration.model_validate(configuration)
         return configuration
 
