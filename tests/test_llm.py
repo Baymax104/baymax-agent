@@ -2,8 +2,8 @@
 from langchain_core.messages import BaseMessage, HumanMessage
 from pytest import mark
 
-from llm import LLMFactory
 from config import ModelConfig
+from llm import LLMFactory
 
 
 test_llm_config = [
