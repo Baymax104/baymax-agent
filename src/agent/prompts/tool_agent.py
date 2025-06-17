@@ -18,7 +18,7 @@ DECISION_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(DECISION_SY
 
 FUNCTION_CALL_SYSTEM_PROMPT = r"""
 [任务描述]
-你需要调用合适的MCP工具完成用户任务，不要回答用户问题。
+你需要调用合适的MCP工具完成用户任务，根据工具返回的结果回答用户的问题。
 
 [可调用的MCP工具]
 {% for tool in tools %}
