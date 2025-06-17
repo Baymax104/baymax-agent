@@ -79,5 +79,6 @@ class ServerConfig(BaseConfig):
 
 
 class Configuration(BaseConfig):
+    env: Literal["dev", "prod"]
     model: ModelConfig = ModelConfig()
     server: ServerConfig = ServerConfig(instances=[])

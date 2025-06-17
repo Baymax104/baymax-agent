@@ -24,7 +24,11 @@ class ConfigManager:
             return configuration
 
         all_config = cls.all_config.as_dict()
-        configuration = {"model": all_config["MODEL"], "server": all_config["SERVER"]}
+        configuration = {
+            "env": all_config["ENV"],
+            "model": all_config["MODEL"],
+            "server": all_config["SERVER"]
+        }
         configuration = Configuration.model_validate(configuration)
         return configuration
 
@@ -35,6 +39,7 @@ class ConfigManager:
             RemoteInstanceConfig(name="", description="", url=""),
         ]
         configuration = Configuration(
+            env="dev",
             model=ModelConfig(api_key="@get api_key"),
             server=ServerConfig(instances=servers)
         )
