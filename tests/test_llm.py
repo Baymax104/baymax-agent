@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import asyncio
+
 from langchain_core.messages import BaseMessage, HumanMessage
 from pytest import mark
 
@@ -24,3 +26,51 @@ def test_llm(provider, model, api_key):
     messages: list[BaseMessage] = [HumanMessage("Hello")]
     message = llm.generate(messages)
     print(message)
+
+
+@mark.parametrize("provider, model, api_key", test_llm_config)
+def test_llm_stream(provider, model, api_key):
+    model_config = ModelConfig(
+        provider=provider,
+        model=model,
+        api_key=api_key,
+    )
+
+    llm = LLMFactory.create(model_config)
+    messages: list[BaseMessage] = [HumanMessage("Hello")]
+    for chunk in llm.generate(messages, stream=True):
+        print(chunk)
+
+
+@mark.parametrize("provider, model, api_key", test_llm_config)
+def test_llm_async(provider, model, api_key):
+    model_config = ModelConfig(
+        provider=provider,
+        model=model,
+        api_key=api_key,
+    )
+    llm = LLMFactory.create(model_config)
+    messages: list[BaseMessage] = [HumanMessage("Hello")]
+
+    async def generate():
+        message = await llm.generate_async(messages)
+        print(message)
+
+    asyncio.run(generate())
+
+
+@mark.parametrize("provider, model, api_key", test_llm_config)
+def test_llm_async_stream(provider, model, api_key):
+    model_config = ModelConfig(
+        provider=provider,
+        model=model,
+        api_key=api_key,
+    )
+    llm = LLMFactory.create(model_config)
+    messages: list[BaseMessage] = [HumanMessage("Hello")]
+
+    async def generate():
+        async for chunk in await llm.generate_async(messages, stream=True):
+            print(chunk)
+
+    asyncio.run(generate())
