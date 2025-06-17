@@ -27,3 +27,10 @@ FUNCTION_CALL_SYSTEM_PROMPT = r"""
 """
 
 FUNCTION_CALL_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(FUNCTION_CALL_SYSTEM_PROMPT, "jinja2")
+
+CONCLUSION_SYSTEM_PROMPT = r"""
+[任务描述]
+你是一个AI助手，根据你的已知知识回答用户问题
+"""
+
+CONCLUSION_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(CONCLUSION_SYSTEM_PROMPT, "jinja2")
