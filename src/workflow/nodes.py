@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from abc import ABC, abstractmethod
-from typing import Any, Callable
+from typing import Any, Callable, Coroutine
 
 from fastmcp import Client as MCPClient
 from langchain_core.messages import AIMessage, ToolMessage
@@ -50,6 +50,8 @@ class ChatNode[Input: State, Output: State](LLMNode[Input, Output]):
 
 # noinspection PyTypeChecker
 class FunctionCallNode[Input: ToolState, Output: ToolState](LLMNode[Input, Output]):
+    input_type: type[Input] = ToolState
+    output_type: type[Output] = ToolState
     client: MCPClient
 
     async def __call__(self, state: Input) -> Output:
@@ -67,7 +69,9 @@ class FunctionCallNode[Input: ToolState, Output: ToolState](LLMNode[Input, Outpu
 
 
 # noinspection PyTypeChecker
-class ToolExecuteNode[Input: ToolState, Output: State](StateNode[Input, Output]):
+class ToolExecuteNode[Input: ToolState, Output: ToolState](StateNode[Input, Output]):
+    input_type: type[Input] = ToolState
+    output_type: type[Output] = ToolState
     client: MCPClient
 
     async def __call__(self, state: Input) -> Output:
@@ -84,19 +88,30 @@ class ToolExecuteNode[Input: ToolState, Output: State](StateNode[Input, Output])
         if not isinstance(result, TextContent):
             raise ValueError(f"{tool_call['name']} returned {type(result)}")
         tool_message = ToolMessage(result.text, tool_call_id=tool_call["id"])
-        return State(messages=add_messages(state.messages, [tool_message]))
+        return ToolState(
+            messages=add_messages(state.messages, [tool_message]),
+            server=state.server,
+            tool_calls=state.tool_calls
+        )
 
 
 # noinspection PyTypeChecker
 class MapNode[Input: State, Output: State](StateNode[Input, Output]):
-    transform: Callable[[Input], Output]
+    input_type: type[Input] = State
+    output_type: type[Output] = State
+    transform: Callable[[Input], Output | Coroutine[Any, Any, Output]]
 
     async def __call__(self, state: Input) -> Output:
-        return self.transform(state)
+        result = self.transform(state)
+        if isinstance(result, Coroutine):
+            return await result
+        return result
 
 
 # noinspection PyTypeChecker
 class RouteNode[Input: State](Node[Input, str]):
+    input_type: type[Input] = State
+    output_type: type[str] = str
     router: Callable[[Input], str]
 
     def __call__(self, state: Input) -> str:

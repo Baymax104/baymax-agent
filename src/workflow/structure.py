@@ -14,7 +14,6 @@ Edge = namedtuple("Edge", ["start", "end"])
 
 
 class GraphConfig(BaseModel):
-    # model_config = ConfigDict(arbitrary_types_allowed=True)
     nodes: list[Node]
     edges: list[Edge]
 
@@ -31,9 +30,13 @@ class GraphBuilder:
 
     def from_config(self, config: GraphConfig) -> Self:
         node_dict = {node.name: node for node in config.nodes}
-        self.__builder.add_sequence(list(node_dict.items()))
 
-        # add start node and end node for convenience
+        # Add nodes except RouteNode
+        for node in config.nodes:
+            if not isinstance(node, RouteNode):
+                self.__builder.add_node(node.name, node)
+
+        # Add start node and end node for convenience
         node_dict[START] = StartNode()
         node_dict[END] = EndNode()
         for edge in config.edges:
@@ -43,7 +46,7 @@ class GraphBuilder:
                 raise RuntimeError(f"End node {edge.end} not in graph")
             end_node = node_dict[edge.end]
             if isinstance(end_node, RouteNode):
-                self.__builder.add_conditional_edges(edge.start, edge.end)
+                self.__builder.add_conditional_edges(edge.start, end_node.router)
             else:
                 self.__builder.add_edge(edge.start, edge.end)
 
