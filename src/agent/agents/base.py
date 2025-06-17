@@ -13,33 +13,16 @@ from llm import LLMFactory
 from workflow import GraphBuilder, GraphConfig
 
 
-class Agent(ABC):
-    state_schema: type[BaseModel]
-    input_schema: type[BaseModel] | None = None
-    output_schema: type[BaseModel] | None = None
+class BaseAgent(ABC):
 
     def __init__(self, config: Configuration):
         self.config = config
         self.mcp_client = MCPClient(MCPConfigTransport(config.server.to_mcp()), timeout=10)
         self.llm = LLMFactory.create(config.model)
-        self.workflow: Pregel | None = None
 
     async def initialize(self):
         await self.__ping_mcp_server()
         await self.__ping_llm()
-        self.__build_workflow()
-
-    @abstractmethod
-    def _get_workflow(self) -> GraphConfig:
-        ...
-
-    def __build_workflow(self):
-        if self.workflow is not None:
-            raise RuntimeError(f"Client already initialized")
-        builder = GraphBuilder(self.state_schema, self.input_schema, self.output_schema)
-        graph_config = self._get_workflow()
-        builder.from_config(graph_config)
-        self.workflow = builder.compile()
 
     async def __ping_mcp_server(self):
         async with self.mcp_client:
@@ -52,3 +35,27 @@ class Agent(ABC):
         if not response.content:
             raise RuntimeError(f"LLM connection failed")
         ic("ping llm successfully")
+
+
+class GraphAgent(BaseAgent):
+    state_schema: type[BaseModel]
+    input_schema: type[BaseModel] | None = None
+    output_schema: type[BaseModel] | None = None
+
+    def __init__(self, config: Configuration):
+        super().__init__(config)
+        self.workflow: Pregel | None = None
+
+    async def initialize(self):
+        await super().initialize()
+        if self.workflow is not None:
+            raise RuntimeError(f"Client already initialized")
+        # build graph
+        builder = GraphBuilder(self.state_schema, self.input_schema, self.output_schema)
+        graph_config = self._get_workflow()
+        builder.from_config(graph_config)
+        self.workflow = builder.compile()
+
+    @abstractmethod
+    def _get_workflow(self) -> GraphConfig:
+        ...

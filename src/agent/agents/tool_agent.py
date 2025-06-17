@@ -6,12 +6,12 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.constants import END, START
 
-from agent.agents.base import Agent
+from agent.agents.base import GraphAgent
 from agent.prompts.tool_agent import *
 from workflow import *
 
 
-class ToolAgent(Agent):
+class ToolAgent(GraphAgent):
     state_schema = ToolState
 
     decision_prompt = ChatPromptTemplate.from_messages([
