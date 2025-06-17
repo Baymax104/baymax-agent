@@ -17,6 +17,7 @@ class BaseAgent(ABC):
 
     def __init__(self, config: Configuration):
         self.config = config
+        self.servers = config.server.instances
         self.mcp_client = MCPClient(MCPConfigTransport(config.server.to_mcp()), timeout=10)
         self.llm = LLMFactory.create(config.model)
 

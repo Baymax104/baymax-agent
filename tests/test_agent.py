@@ -15,6 +15,7 @@ def test_chat(query: str):
     async def main():
         client = ToolAgent(ConfigManager.get_config())
         await client.initialize()
-        await client.chat(query)
+        async for chunk in await client.chat(query):
+            print(chunk.content, end="")
 
     asyncio.run(main())
