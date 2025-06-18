@@ -80,8 +80,13 @@ class ServerConfig(BaseConfig):
         return MCPConfig(mcpServers=mcp_servers)
 
 
+# noinspection PyNestedDecorators
 class LogConfig(BaseConfig):
     dir: str | None = None
+    level: Literal["DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
+    rotation: str | int | None = None
+    retention: str | int | None = None
+    compression: str | None = None
 
     @field_validator("dir")
     @classmethod
