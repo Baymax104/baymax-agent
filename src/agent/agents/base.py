@@ -4,11 +4,11 @@ from contextlib import AsyncExitStack
 
 from fastmcp import Client as MCPClient
 from fastmcp.client.transports import MCPConfigTransport
-from icecream import ic
 from langchain_core.messages import HumanMessage
 
 from config import Configuration
 from llm import LLMFactory
+from monitor import LLMConnectionError, MCPConnectionError, logger
 
 
 class BaseAgent(ABC):
@@ -21,6 +21,7 @@ class BaseAgent(ABC):
         self.mcp_client = MCPClient(MCPConfigTransport(config.server.to_mcp()), timeout=10)
         self.llm = LLMFactory.create(config.model)
 
+    @logger.catch_exception(throw=True)
     async def initialize(self):
         await self.__ping_mcp_server()
         await self.__ping_llm()
@@ -28,19 +29,16 @@ class BaseAgent(ABC):
     async def __ping_mcp_server(self):
         self.mcp_client = await self.context.enter_async_context(self.mcp_client)
         if not await self.mcp_client.ping():
-            raise RuntimeError(f"MCP server connection failed")
-        ic("ping mcp successfully")
+            raise MCPConnectionError(f"MCP server connection failed")
+        logger.success("MCP server connection established")
 
     async def __ping_llm(self):
         response = await self.llm.generate_async([HumanMessage("Hello")])
         if not response.content:
-            raise RuntimeError(f"LLM connection failed")
-        ic("ping llm successfully")
+            raise LLMConnectionError(f"LLM connection failed")
+        logger.success("LLM connection established")
 
+    @logger.catch_exception(throw=True)
     async def close(self):
-        try:
-            await self.context.aclose()
-            ic("close agent successfully")
-        except Exception as e:
-            ic(e)
-
+        await self.context.aclose()
+        logger.success(f"Agent closed successfully")

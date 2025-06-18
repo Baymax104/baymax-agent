@@ -35,14 +35,17 @@ class ExceptionCollector:
 
 # for type hint
 class Logger(Protocol):
-    def catch_exception(self, func: Callable) -> Callable: ...
+    def catch_exception(self, *, throw: bool = False) -> Callable: ...
 
 
 exception_collector = ExceptionCollector(ConfigManager.get_config())
 
 
-def catch_exception(func: Callable) -> Callable:
-    return exception_collector.register(func)
+def catch_exception(*, throw: bool = False) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        return exception_collector.register(func, throw=throw)
+
+    return decorator
 
 
 logger.catch_exception = catch_exception
