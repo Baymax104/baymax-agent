@@ -4,7 +4,7 @@ from pathlib import Path
 from dynaconf import Dynaconf
 from ruamel.yaml import YAML
 
-from config.models import Configuration, ModelConfig, RemoteInstanceConfig, ServerConfig, StdioInstanceConfig
+from config.models import Configuration, LogConfig, ModelConfig, RemoteInstanceConfig, ServerConfig, StdioInstanceConfig
 
 
 class ConfigManager:
@@ -24,11 +24,7 @@ class ConfigManager:
             return configuration
 
         all_config = cls.all_config.as_dict()
-        configuration = {
-            "env": all_config["ENV"],
-            "model": all_config["MODEL"],
-            "server": all_config["SERVER"]
-        }
+        configuration = {key.lower(): value for key, value in all_config.items()}
         configuration = Configuration.model_validate(configuration)
         return configuration
 
@@ -41,6 +37,7 @@ class ConfigManager:
         configuration = Configuration(
             env="dev",
             model=ModelConfig(api_key="@get api_key"),
+            log=LogConfig(dir="./logs"),
             server=ServerConfig(instances=servers)
         )
         return configuration

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class BaseConfig(BaseModel):
@@ -37,7 +37,9 @@ class StdioInstanceConfig(BaseInstanceConfig):
     def to_mcp(self) -> StdioMCPServer:
         # check script
         root = Path(__file__).parent.parent / "servers"
-        script_path = (root / self.script).resolve()
+        script_path = Path(self.script)
+        if not script_path.is_absolute():
+            script_path = (root / self.script).resolve()
         if not script_path.is_file():
             raise FileNotFoundError(f"Script not found: {script_path}")
         if not str(script_path).endswith(".py"):
@@ -78,7 +80,21 @@ class ServerConfig(BaseConfig):
         return MCPConfig(mcpServers=mcp_servers)
 
 
+class LogConfig(BaseConfig):
+    dir: str | None = None
+
+    @field_validator("dir")
+    @classmethod
+    def dir_validator(cls, value: str) -> str:
+        value = Path(value)
+        if not value.is_absolute():
+            value = Path(__file__).parent.parent.parent / value
+        return str(value.resolve())
+
+
+
 class Configuration(BaseConfig):
     env: Literal["dev", "prod"]
     model: ModelConfig = ModelConfig()
+    log: LogConfig = LogConfig()
     server: ServerConfig = ServerConfig(instances=[])

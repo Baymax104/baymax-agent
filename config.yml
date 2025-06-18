@@ -5,6 +5,9 @@ model:
   model: glm-4-flash
   api_key: "@get api_key"
 
+log:
+  dir: ./logs
+
 server:
   instances:
     - name: calculate
