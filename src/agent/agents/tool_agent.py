@@ -33,40 +33,39 @@ class ToolAgent(BaseAgent):
         user_message = HumanMessage(user_prompt)
         messages = self.decision_prompt.format_messages(servers=self.servers, user=[user_message])
 
-        async with self.mcp_client:
-            # decision
-            decision_message = await self.llm.generate_async(messages)
+        # decision
+        decision_message = await self.llm.generate_async(messages)
 
-            # extract server
-            server = re.search(r"server://([^/]+)", decision_message.content)
-            if not server or server.group(1) == "null":
-                return await self.__common_chat(user_message)
-            server = server.group(1)
+        # extract server
+        server = re.search(r"server://([^/]+)", decision_message.content)
+        if not server or server.group(1) == "null":
+            return await self.__common_chat(user_message)
+        server = server.group(1)
 
-            # get server tools
-            tools = await self.mcp_client.list_tools()
-            server_tools = [tool for tool in tools if tool.name.startswith(server)]
-            if not server_tools:
-                server_tools = tools
+        # get server tools
+        tools = await self.mcp_client.list_tools()
+        server_tools = [tool for tool in tools if tool.name.startswith(server)]
+        if not server_tools:
+            server_tools = tools
 
-            # function call
-            messages = self.function_call_prompt.format_messages(tools=server_tools, user=[user_message])
-            function_call = await self.llm.generate_async(messages, tools=server_tools)
-            if not function_call:
-                return await self.__common_chat(user_message)
-            messages = add_messages(messages, function_call)
+        # function call
+        messages = self.function_call_prompt.format_messages(tools=server_tools, user=[user_message])
+        function_call = await self.llm.generate_async(messages, tools=server_tools)
+        if not function_call.tool_calls:
+            return await self.__common_chat(user_message)
+        messages = add_messages(messages, function_call)
 
-            # tool execute
-            tool_call = function_call.tool_calls[0]
-            result = await self.mcp_client.call_tool(tool_call["name"], tool_call["args"])
-            result = result[0]
-            if not isinstance(result, TextContent):
-                raise ValueError(f"Tool call {tool_call['name']} returned {type(result)}")
-            tool_message = ToolMessage(result.text, tool_call_id=tool_call["id"])
-            messages = add_messages(messages, tool_message)
+        # tool execute
+        tool_call = function_call.tool_calls[0]
+        result = await self.mcp_client.call_tool(tool_call["name"], tool_call["args"])
+        result = result[0]
+        if not isinstance(result, TextContent):
+            raise ValueError(f"Tool call {tool_call['name']} returned {type(result)}")
+        tool_message = ToolMessage(result.text, tool_call_id=tool_call["id"])
+        messages = add_messages(messages, tool_message)
 
-            # conclude and return answer stream
-            return await self.llm.generate_async(messages, stream=True)
+        # conclude and return answer stream
+        return await self.llm.generate_async(messages, stream=True)
 
     async def __common_chat(self, user_message: HumanMessage) -> AsyncIterator[AnyMessage]:
         """common chat for error fallback"""

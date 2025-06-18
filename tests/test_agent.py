@@ -13,9 +13,10 @@ queries = ["你好", "123*123等于多少"]
 @mark.parametrize("query", queries)
 def test_chat(query: str):
     async def main():
-        client = ToolAgent(ConfigManager.get_config())
-        await client.initialize()
-        async for chunk in await client.chat(query):
+        agent = ToolAgent(ConfigManager.get_config())
+        await agent.initialize()
+        async for chunk in await agent.chat(query):
             print(chunk.content, end="")
+        await agent.close()
 
     asyncio.run(main())
