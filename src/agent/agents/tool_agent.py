@@ -1,48 +1,36 @@
 # -*- coding: UTF-8 -*-
 import re
-from typing import AsyncIterator
 
 from langchain_core.messages import HumanMessage, ToolMessage
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.graph import add_messages
 from mcp.types import TextContent
 
-from agent.agents.base import BaseAgent
+from agent.agents.base import BaseAgent, ChatState
 from agent.prompts.tool_agent import *
-from monitor import MCPToolError, logger
-from workflow import *
+from conversation.session.models import Session
+from monitor import AgentError, MCPToolError, logger
 
 
 class ToolAgent(BaseAgent):
 
-    decision_prompt = ChatPromptTemplate.from_messages([
-        DECISION_SYSTEM_TEMPLATE,
-        MessagesPlaceholder("user")
-    ])
-
-    function_call_prompt = ChatPromptTemplate.from_messages([
-        FUNCTION_CALL_SYSTEM_TEMPLATE,
-        MessagesPlaceholder("user")
-    ])
-
-    common_template = ChatPromptTemplate.from_messages([
-        COMMON_SYSTEM_TEMPLATE,
-        MessagesPlaceholder("user")
-    ])
-
     @logger.catch_exception()
-    async def chat(self, user_prompt: str) -> AsyncIterator[AnyMessage]:
-        user_message = HumanMessage(user_prompt)
-        messages = self.decision_prompt.format_messages(servers=self.servers, user=[user_message])
+    async def chat(self, session: Session) -> ChatState:
+        if not session.context:
+            raise AgentError("Session context is empty")
+        if not isinstance(session.context[-1], HumanMessage):
+            raise AgentError("Last session context is not of type HumanMessage")
+        user_message = session.context[-1]
+        middle_messages = []
 
-        # decision
-        decision_message = await self.llm.generate_async(messages)
+        # generate decision
+        decision_messages = decision_prompt(servers=self.servers, history=[user_message])
+        decision = await self.llm.generate_async(decision_messages)
 
         # extract server
-        server = re.search(r"server://([^/]+)", decision_message.content)
+        server = re.search(r"server://([^/]+)", decision.content)
         if not server or server.group(1) == "null":
             logger.info("No server selected")
-            return await self.__common_chat(user_message)
+            return await self.__common_chat(session)
         server = server.group(1)
 
         # get server tools
@@ -54,12 +42,12 @@ class ToolAgent(BaseAgent):
         logger.info(f"Server \"{server}\" selected, available tools: [{', '.join(tool.name for tool in server_tools)}]")
 
         # function call
-        messages = self.function_call_prompt.format_messages(tools=server_tools, user=[user_message])
-        function_call = await self.llm.generate_async(messages, tools=server_tools)
+        function_call_messages = function_call_prompt(tools=server_tools, history=[user_message])
+        function_call = await self.llm.generate_async(function_call_messages, tools=server_tools)
         if not function_call.tool_calls:
             logger.debug("No function call in message")
-            return await self.__common_chat(user_message)
-        messages = add_messages(messages, function_call)
+            return await self.__common_chat(session)
+        middle_messages = add_messages(middle_messages, function_call)
 
         # tool execute
         tool_call = function_call.tool_calls[0]
@@ -70,12 +58,20 @@ class ToolAgent(BaseAgent):
             raise MCPToolError(f"Tool call {tool_call['name']} returned {type(result)}")
         logger.debug(f"Tool execution result: {result}")
         tool_message = ToolMessage(result.text, tool_call_id=tool_call["id"])
-        messages = add_messages(messages, tool_message)
+        middle_messages = add_messages(middle_messages, tool_message)
+
+        # add session history
+        conclusion_messages = conclusion_prompt(
+            instructions=session.user_instructions,
+            history=[*session.context, function_call, tool_message],
+        )
 
         # conclude and return answer stream
-        return await self.llm.generate_async(messages, stream=True)
+        stream = await self.llm.generate_async(conclusion_messages, stream=True)
+        return ChatState(middle=middle_messages, stream=stream)
 
-    async def __common_chat(self, user_message: HumanMessage) -> AsyncIterator[AnyMessage]:
+    async def __common_chat(self, session: Session) -> ChatState:
         """common chat for error fallback"""
-        messages = self.common_template.format_messages(user=[user_message])
-        return await self.llm.generate_async(messages, stream=True)
+        messages = common_prompt(instructions=session.user_instructions, history=session.context)
+        stream = await self.llm.generate_async(messages, stream=True)
+        return ChatState(stream=stream)

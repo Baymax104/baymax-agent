@@ -1,14 +1,22 @@
 # -*- coding: UTF-8 -*-
 from abc import ABC
 from contextlib import AsyncExitStack
+from typing import AsyncIterator
 
 from fastmcp import Client as MCPClient
 from fastmcp.client.transports import MCPConfigTransport
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import AnyMessage, HumanMessage
+from pydantic import BaseModel, ConfigDict
 
 from config import Configuration
 from llm import LLMFactory
 from monitor import LLMConnectionError, MCPConnectionError, logger
+
+
+class ChatState(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    middle: list[AnyMessage] = []
+    stream: AsyncIterator[AnyMessage] | None = None
 
 
 class BaseAgent(ABC):

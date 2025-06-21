@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
-from langchain_core.prompts import SystemMessagePromptTemplate
+from langchain_core.messages import AnyMessage
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate
 
 
 DECISION_SYSTEM_PROMPT = r"""
@@ -14,7 +15,14 @@ DECISION_SYSTEM_PROMPT = r"""
 {% endfor %}
 """
 
-DECISION_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(DECISION_SYSTEM_PROMPT, "jinja2")
+
+def decision_prompt(servers: list, history: list[AnyMessage]) -> list[AnyMessage]:
+    template = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template(DECISION_SYSTEM_PROMPT, "jinja2"),
+        MessagesPlaceholder("history")
+    ])
+    return template.format_messages(servers=servers, history=history)
+
 
 FUNCTION_CALL_SYSTEM_PROMPT = r"""
 [任务描述]
@@ -26,11 +34,56 @@ FUNCTION_CALL_SYSTEM_PROMPT = r"""
 {% endfor %}
 """
 
-FUNCTION_CALL_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(FUNCTION_CALL_SYSTEM_PROMPT, "jinja2")
+
+def function_call_prompt(tools: list, history: list[AnyMessage]) -> list[AnyMessage]:
+    template = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template(FUNCTION_CALL_SYSTEM_PROMPT, "jinja2"),
+        MessagesPlaceholder("history")
+    ])
+    return template.format_messages(tools=tools, history=history)
+
 
 COMMON_SYSTEM_PROMPT = r"""
 [任务描述]
-你是一个AI助手，根据你的已知知识回答用户问题
+你是一个AI助手，根据你的已知知识和用户指令的要求回答用户问题
+
+[用户指令]
+{% if instructions %}
+{% for instruction in instructions %}
+{{ loop.index }}. {{ instruction }}
+{% endfor %}
+{% else %}
+无
+{% endif %}
 """
 
-COMMON_SYSTEM_TEMPLATE = SystemMessagePromptTemplate.from_template(COMMON_SYSTEM_PROMPT, "jinja2")
+
+def common_prompt(instructions: list[str], history: list[AnyMessage]) -> list[AnyMessage]:
+    template = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template(COMMON_SYSTEM_PROMPT, "jinja2"),
+        MessagesPlaceholder("history")
+    ])
+    return template.format_messages(instructions=instructions, history=history)
+
+
+CONCLUSION_SYSTEM_PROMPT = r"""
+[任务描述]
+你是一个AI助手，根据你的已知知识和用户指令的要求，回答用户问题或向用户输出工具调用结果
+
+[用户指令]
+{% if instructions %}
+{% for instruction in instructions %}
+{{ loop.index }}. {{ instruction }}
+{% endfor %}
+{% else %}
+无
+{% endif %}
+"""
+
+
+def conclusion_prompt(instructions: list[str], history: list[AnyMessage]) -> list[AnyMessage]:
+    template = ChatPromptTemplate.from_messages([
+        SystemMessagePromptTemplate.from_template(CONCLUSION_SYSTEM_PROMPT, "jinja2"),
+        MessagesPlaceholder("history")
+    ])
+    return template.format_messages(instructions=instructions, history=history)
