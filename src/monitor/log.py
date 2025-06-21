@@ -1,15 +1,27 @@
 # -*- coding: UTF-8 -*-
+from __future__ import annotations
+
 import sys
+import types
 from pathlib import Path
+from typing import Callable, cast
 
 from loguru import logger as __logger
+from loguru._logger import Logger as LoguruLogger
 
 from config import ConfigManager, Configuration
+from monitor.collector import catch_exception
 
 
-def init(config: Configuration):
+# for type hint
+class Logger(LoguruLogger):
+    def catch_exception(self, *, throw: bool = False) -> Callable: pass
+
+
+def init(config: Configuration, service: str | None = None) -> Logger:
     log_config = config.log
-    __logger.remove(0)
+    service = "monitor" if not service else service
+    __logger.remove()
 
     log_format = (
         "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
@@ -21,7 +33,7 @@ def init(config: Configuration):
         log_dir = Path(log_config.dir)
         log_dir.mkdir(exist_ok=True)
         __logger.add(
-            log_dir / "monitor.log",
+            log_dir / f"{service}.log",
             format=log_format,
             encoding="utf-8",
             level=log_config.level,
@@ -37,7 +49,13 @@ def init(config: Configuration):
             colorize=True
         )
 
-    return __logger
+    logger = __logger.bind(service=service)
+
+    logger.catch_exception = types.MethodType(catch_exception, logger)
+    logger = cast(Logger, logger)
+
+    return logger
 
 
-logger = init(ConfigManager.get_config())
+def get_logger(service: str | None = None) -> Logger:
+    return init(ConfigManager.get_config(), service=service)

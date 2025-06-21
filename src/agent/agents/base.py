@@ -10,7 +10,10 @@ from pydantic import BaseModel, ConfigDict
 
 from config import Configuration
 from llm import LLMFactory
-from monitor import LLMConnectionError, MCPConnectionError, logger
+from monitor import LLMConnectionError, MCPConnectionError, get_logger
+
+
+logger = get_logger()
 
 
 class ChatState(BaseModel):

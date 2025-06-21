@@ -7,8 +7,11 @@ from mcp.types import TextContent
 
 from agent.agents.base import BaseAgent, ChatState
 from agent.prompts.tool_agent import *
-from conversation.session.models import Session
-from monitor import AgentError, MCPToolError, logger
+from conversation import Session
+from monitor import AgentError, MCPToolError, get_logger
+
+
+logger = get_logger()
 
 
 class ToolAgent(BaseAgent):

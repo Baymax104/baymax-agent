@@ -1,5 +1,5 @@
 # -*- coding: UTF-8 -*-
-from monitor.collector import logger
+from monitor.log import get_logger
 from monitor.exceptions import (
     AgentError,
     ConfigError,

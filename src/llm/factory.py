@@ -3,7 +3,10 @@ from config import ModelConfig
 from llm.base import LLMProvider
 from llm.deepseek import DeepSeek
 from llm.zhipuai import ZhipuAI
-from monitor import ConfigInvalidError, LLMProviderError, logger
+from monitor import ConfigInvalidError, LLMProviderError, get_logger
+
+
+logger = get_logger()
 
 
 class LLMFactory:
