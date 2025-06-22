@@ -97,9 +97,20 @@ class LogConfig(BaseConfig):
         return str(value.resolve())
 
 
+class RedisConfig(BaseConfig):
+    host: str | None = None
+    port: int | None = None
+    password: str | None = None
+    db: int | None = None
+
+
+class DatabaseConfig(BaseConfig):
+    redis: RedisConfig = RedisConfig()
+
 
 class Configuration(BaseConfig):
     env: Literal["dev", "prod"]
     model: ModelConfig = ModelConfig()
+    database: DatabaseConfig = DatabaseConfig()
     log: LogConfig = LogConfig()
     server: ServerConfig = ServerConfig(instances=[])

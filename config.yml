@@ -5,6 +5,13 @@ model:
   model: glm-4-flash
   api_key: "@get api_key"
 
+database:
+  redis:
+    host: localhost
+    port: 6378
+    password:
+    db:
+
 log:
   dir: ./logs
   level: SUCCESS
