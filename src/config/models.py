@@ -102,10 +102,20 @@ class RedisConfig(BaseConfig):
     port: int | None = None
     password: str | None = None
     db: int | None = None
+    prefix: str | None = None
+
+
+class MongoDBConfig(BaseConfig):
+    host: str | None = None
+    port: int | None = None
+    user: str | None = None
+    password: str | None = None
+    db: str | None = None
 
 
 class DatabaseConfig(BaseConfig):
     redis: RedisConfig = RedisConfig()
+    mongodb: MongoDBConfig = MongoDBConfig()
 
 
 class Configuration(BaseConfig):

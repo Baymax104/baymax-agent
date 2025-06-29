@@ -9,12 +9,15 @@ database:
   redis:
     host: localhost
     port: 6378
-    password:
-    db:
+
+  mongodb:
+    host: localhost
+    port: 27017
+    db: agent
 
 log:
   dir: ./logs
-  level: SUCCESS
+  level: DEBUG
   rotation: 100MB
   retention: 10
 
