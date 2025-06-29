@@ -48,3 +48,15 @@ class MCPConnectionError(MCPError):
 
 class MCPToolError(MCPError):
     pass
+
+
+class DatabaseError(BaseError):
+    pass
+
+
+class ConversationError(BaseError):
+    pass
+
+
+class ConversationNotFoundError(ConversationError):
+    pass
