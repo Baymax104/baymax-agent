@@ -1,14 +1,17 @@
 # -*- coding: UTF-8 -*-
+import asyncio
+
 import ormsgpack
 from icecream import ic
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
-from conversation import Session
+from config import ConfigManager
+from conversation import Conversation, Session
+from conversation.repository import ConversationRepository
 
 
 def test_messagepack():
     session = Session(
-        id="111",
         context=[
             SystemMessage("Hello"),
             HumanMessage("你好"),
@@ -25,12 +28,22 @@ def test_messagepack():
     ic(session)
 
 
-def test_redis():
-    from db.redis import redis_db
-    redis_db.set("hello", b"world")
-    is_exist = redis_db.exists("hello")
-    assert is_exist
-    value = redis_db.get("hello")
-    assert value == b"world"
-    assert redis_db.delete("hello")
-    assert not redis_db.exists("hello")
+def test_mongodb():
+    async def main():
+        config = ConfigManager.get_config()
+        repo = ConversationRepository(config)
+        await repo.initialize()
+
+        conversation = Conversation(
+            user_id="bcd",
+            title="hello",
+            type="archive",
+        )
+        ic(conversation)
+        await repo.add_conversation(conversation)
+        conversation = await repo.get_conversation(conversation.id)
+        assert conversation.title == "hello"
+        await repo.delete_conversation(conversation.id)
+        repo.close()
+
+    asyncio.run(main())

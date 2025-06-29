@@ -1,2 +1,2 @@
 # -*- coding: UTF-8 -*-
-from conversation.session import Session
+from conversation.models import Conversation, Session

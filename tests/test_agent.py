@@ -18,7 +18,6 @@ def test_chat(query: str):
         agent = ToolAgent(ConfigManager.get_config())
         await agent.initialize()
         session = Session(
-            id="",
             user_instructions=["你是一个小学数学教师，你要用温柔的语气与用户交流"],
             context=[HumanMessage(query)]
         )
