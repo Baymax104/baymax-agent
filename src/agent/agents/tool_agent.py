@@ -5,9 +5,9 @@ from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.graph import add_messages
 from mcp.types import TextContent
 
-from agent.agents.base import BaseAgent, ChatState
+from agent.agents.base import BaseAgent
+from agent.models import ChatState, Session
 from agent.prompts.tool_agent import *
-from conversation import Session
 from monitor import AgentError, MCPToolError, get_logger
 
 

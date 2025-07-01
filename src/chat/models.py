@@ -4,8 +4,7 @@ from typing import Literal
 from uuid import uuid4
 
 from beanie import Document
-from langchain_core.messages import BaseMessage
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class Message(BaseModel):
@@ -25,9 +24,3 @@ class Conversation(Document):
     type: Literal["archive", "temporary"]
     create_at: float = time.time()
     content: list[ChatTurn] = []
-
-
-class Session(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    context: list[BaseMessage]
-    user_instructions: list[str] = []

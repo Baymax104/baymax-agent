@@ -2,15 +2,16 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from chat import Conversation
+from chat.memory.base import ChatRepository
+from chat.models import ChatTurn, Conversation
 from config import Configuration, MongoDBConfig
 from monitor import DatabaseError
 
 
-class ConversationRepository:
+class MongoDBChatRepository(ChatRepository):
 
     def __init__(self, config: Configuration):
-        self.config = config.database.mongodb
+        super().__init__(config)
         self.mongodb = self.__init_mongodb(config.database.mongodb)
 
     def __init_mongodb(self, config: MongoDBConfig):
@@ -24,19 +25,14 @@ class ConversationRepository:
         return client
 
     async def initialize(self):
-        await init_beanie(database=self.mongodb[self.config.db], document_models=[Conversation])
+        await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[Conversation])
 
-    async def add(self, conversation: Conversation):
-        await Conversation.insert_one(conversation)
-
-    async def get(self, conversation_id: str) -> Conversation | None:
-        return await Conversation.get(conversation_id)
-
-    async def delete(self, conversation_id: str):
+    async def add(self, conversation_id: str, chat_turn: ChatTurn):
+        chat_turn = chat_turn.model_dump()
         conversation = await Conversation.get(conversation_id)
-        if conversation is None:
+        if not conversation:
             raise DatabaseError(f"Conversation {conversation_id} does not exist.")
-        await conversation.delete()  # noqa
+        await conversation.update({"$push": {Conversation.content: chat_turn}})
 
     async def close(self):
         self.mongodb.close()
