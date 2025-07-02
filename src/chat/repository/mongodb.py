@@ -3,7 +3,7 @@ from beanie import init_beanie
 from beanie.exceptions import CollectionWasNotInitialized
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from chat.models import ChatTurn, Conversation
+from chat.models import ChatTurn, ConversationDB
 from chat.repository.base import ChatRepository
 from config import Configuration, MongoDBConfig
 from monitor import DatabaseError
@@ -28,21 +28,21 @@ class MongoDBChatRepository(ChatRepository):
 
     async def initialize(self):
         if not self.is_external_connection:
-            await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[Conversation])
+            await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[ConversationDB])
 
     def __is_external_connection(self) -> bool:
         try:
-            Conversation.get_settings()
+            ConversationDB.get_settings()
             return True
         except CollectionWasNotInitialized:
             return False
 
     async def add(self, conversation_id: str, chat_turn: ChatTurn) -> list[ChatTurn]:
         chat_turn = chat_turn.model_dump()
-        conversation = await Conversation.get(conversation_id)
+        conversation = await ConversationDB.get(conversation_id)
         if not conversation:
             raise DatabaseError(f"Conversation {conversation_id} does not exist.")
-        conversation = await conversation.update({"$push": {Conversation.content: chat_turn}})
+        conversation = await conversation.update({"$push": {ConversationDB.content: chat_turn}})
         return conversation.content
 
     async def close(self):

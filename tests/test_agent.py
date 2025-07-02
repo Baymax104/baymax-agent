@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from beanie import init_beanie
 from langchain_core.messages import HumanMessage
 from pytest import mark
 
@@ -30,7 +29,6 @@ async def test_chat(query: str):
 @mark.asyncio
 async def test_chat_archive():
     config = ConfigManager.get_config()
-    await init_beanie(connection_string="mongodb://localhost:27017/User", document_models=[User])
     user = User(name="John", instructions=[])
     async with ConversationController(user, config) as controller:
         conversation_id = await controller.create(conversation_type="archive")
@@ -44,7 +42,6 @@ async def test_chat_archive():
 @mark.asyncio
 async def test_chat_temporary():
     config = ConfigManager.get_config()
-    await init_beanie(connection_string="mongodb://localhost:27017/User", document_models=[User])
     user = User(name="John", instructions=[])
     async with ConversationController(user, config) as controller:
         conversation_id = await controller.create(conversation_type="temporary")

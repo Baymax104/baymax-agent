@@ -5,7 +5,7 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from redis.asyncio import Redis
 
-from chat import Conversation
+from chat import Conversation, ConversationDB
 from config import Configuration, MongoDBConfig, RedisConfig
 from monitor import DatabaseError
 from utils import AsyncResource
@@ -41,11 +41,12 @@ class ConversationRepository(AsyncResource):
         return redis
 
     async def initialize(self):
-        await init_beanie(database=self.mongodb[self.config.db], document_models=[Conversation])
+        await init_beanie(database=self.mongodb[self.config.db], document_models=[ConversationDB])
         await self.redis.initialize()
 
     async def add(self, conversation: Conversation):
-        await Conversation.insert_one(conversation)
+        conversation = conversation.to_entity()
+        await ConversationDB.insert_one(conversation)
 
     async def get(self, conversation_id: str) -> Conversation | None:
         # get from redis
@@ -57,16 +58,16 @@ class ConversationRepository(AsyncResource):
             return conversation
 
         # get from mongodb
-        conversation = await Conversation.get(conversation_id)
+        conversation = await ConversationDB.get(conversation_id)
         if not conversation:
             return None
 
         encoded = ormsgpack.packb(conversation.model_dump())
         await self.redis.set(cache_key, encoded)
-        return conversation
+        return conversation.to_domain()
 
     async def delete(self, conversation_id: str):
-        conversation = await Conversation.get(conversation_id)
+        conversation = await ConversationDB.get(conversation_id)
         if conversation is None:
             raise DatabaseError(f"Conversation {conversation_id} does not exist.")
         await conversation.delete()  # noqa
