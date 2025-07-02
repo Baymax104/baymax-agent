@@ -1,10 +1,12 @@
 # -*- coding: UTF-8 -*-
-
+from beanie import init_beanie
 from langchain_core.messages import HumanMessage
 from pytest import mark
 
 from agent import Session, ToolAgent
 from config import ConfigManager
+from conversation.controller import ConversationController
+from users import User
 
 
 queries = ["你好", "123*123等于多少"]
@@ -23,3 +25,31 @@ async def test_chat(query: str):
     async for chunk in state.stream:
         print(chunk.content, end="")
     await agent.close()
+
+
+@mark.asyncio
+async def test_chat_archive():
+    config = ConfigManager.get_config()
+    await init_beanie(connection_string="mongodb://localhost:27017/User", document_models=[User])
+    user = User(name="John", instructions=[])
+    async with ConversationController(user, config) as controller:
+        conversation_id = await controller.create(conversation_type="archive")
+        chat_controller = await controller.start_conversation(conversation_id)
+        async with chat_controller:
+            response = chat_controller.chat("你好")
+            async for message in response:
+                print(message, end="")
+
+
+@mark.asyncio
+async def test_chat_temporary():
+    config = ConfigManager.get_config()
+    await init_beanie(connection_string="mongodb://localhost:27017/User", document_models=[User])
+    user = User(name="John", instructions=[])
+    async with ConversationController(user, config) as controller:
+        conversation_id = await controller.create(conversation_type="temporary")
+        chat_controller = await controller.start_conversation(conversation_id)
+        async with chat_controller:
+            response = chat_controller.chat("你好")
+            async for message in response:
+                print(message, end="")
