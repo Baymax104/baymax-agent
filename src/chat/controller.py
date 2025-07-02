@@ -1,17 +1,17 @@
 # -*- coding: UTF-8 -*-
-from typing import AsyncIterator, Self
+from typing import AsyncIterator
 
 from langchain_core.messages import AnyMessage, HumanMessage
 
 from agent import Session, ToolAgent
-from chat import ChatTurn
 from chat.memory import ChatMemory
-from chat.models import Conversation, Message
+from chat.models import ChatTurn, Conversation, Message
 from config import Configuration
 from users import User
+from utils import AsyncResource
 
 
-class ChatController:
+class ChatController(AsyncResource):
 
     def __init__(self, conversation: Conversation, user: User, config: Configuration):
         self.conversation = conversation
@@ -20,7 +20,7 @@ class ChatController:
         self.agent = ToolAgent(config)
         self.memory = ChatMemory(conversation, config)
 
-    async def start(self):
+    async def initialize(self):
         await self.agent.initialize()
         await self.memory.initialize()
 
@@ -32,21 +32,15 @@ class ChatController:
             user_instructions=self.user.instructions
         )
         state = await self.agent.chat(session)
-        ai_message = "".join(chunk.content async for chunk in state.stream)
+        ai_message_chunks = [chunk.content async for chunk in state.stream]
         chat_turn = ChatTurn(
             human_message=Message(role="human", content=user_input),
-            ai_message=Message(role="ai", content=ai_message)
+            ai_message=Message(role="ai", content="".join(ai_message_chunks))
         )
         await self.memory.add(chat_turn)
-        return state.stream
+        for chunk in ai_message_chunks:
+            yield chunk
 
-    async def finish(self):
+    async def close(self):
         await self.agent.close()
         await self.memory.close()
-
-    async def __aenter__(self) -> Self:
-        await self.start()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.finish()

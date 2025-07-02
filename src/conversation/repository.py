@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from typing import Self
 
 import ormsgpack
 from beanie import init_beanie
@@ -9,9 +8,10 @@ from redis.asyncio import Redis
 from chat import Conversation
 from config import Configuration, MongoDBConfig, RedisConfig
 from monitor import DatabaseError
+from utils import AsyncResource
 
 
-class ConversationRepository:
+class ConversationRepository(AsyncResource):
 
     def __init__(self, config: Configuration):
         self.config = config.database.mongodb
@@ -75,10 +75,3 @@ class ConversationRepository:
     async def close(self):
         self.mongodb.close()
         await self.redis.aclose()
-
-    async def __aenter__(self) -> Self:
-        await self.initialize()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()

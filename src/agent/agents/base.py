@@ -9,12 +9,13 @@ from langchain_core.messages import HumanMessage
 from config import Configuration
 from llm import LLMFactory
 from monitor import LLMConnectionError, MCPConnectionError, get_logger
+from utils import AsyncResource
 
 
 logger = get_logger()
 
 
-class BaseAgent(ABC):
+class BaseAgent(AsyncResource, ABC):
 
     # noinspection PyAbstractClass
     def __init__(self, config: Configuration):

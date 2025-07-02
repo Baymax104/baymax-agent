@@ -79,6 +79,18 @@ wheels = [
 ]
 
 [[package]]
+name = "aiostream"
+version = "0.7.0"
+source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://mirrors.aliyun.com/pypi/packages/bf/1c/d5ae5c059529a98610fc15268e39506a4f8467501983afb5e45d34dc18db/aiostream-0.7.0.tar.gz", hash = "sha256:5ab4acd44ef5f583b6488c32ade465f43c3d7b0df039f1ee49dfb1fd1e255e02" }
+wheels = [
+    { url = "https://mirrors.aliyun.com/pypi/packages/f1/4e/a0bd3a9d0ec137fc36c8d707ce1d89dcbf777fc8ef57b20850a04a1feb78/aiostream-0.7.0-py3-none-any.whl", hash = "sha256:17e52dc10fdf98c4b5296c7f3569511c13bfaf12da31c072bad580817e69d705" },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple/" }
@@ -136,6 +148,7 @@ name = "baymax-agent"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "aiostream" },
     { name = "beanie" },
     { name = "dynaconf" },
     { name = "fastmcp" },
@@ -161,6 +174,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiostream", specifier = ">=0.7.0" },
     { name = "beanie", specifier = ">=1.30.0" },
     { name = "dynaconf", specifier = ">=3.2.11" },
     { name = "fastmcp", specifier = ">=2.8.0" },

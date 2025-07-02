@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from typing import Self
 
 import ormsgpack
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
@@ -8,9 +7,10 @@ from redis.asyncio import Redis
 from chat.models import ChatTurn, Conversation
 from chat.repository import InMemoryChatRepository, MongoDBChatRepository
 from config import Configuration, RedisConfig
+from utils import AsyncResource
 
 
-class ChatMemory:
+class ChatMemory(AsyncResource):
 
     def __init__(self, conversation: Conversation, config: Configuration):
         self.conversation = conversation
@@ -69,10 +69,3 @@ class ChatMemory:
     async def close(self):
         await self.repo.close()
         await self.redis.aclose()
-
-    async def __aenter__(self) -> Self:
-        await self.initialize()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
