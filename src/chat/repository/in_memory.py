@@ -8,14 +8,14 @@ class InMemoryChatRepository(ChatRepository):
 
     def __init__(self, config: Configuration):
         super().__init__(config)
-        self.messages = []
-
+        self.chat_turns = []
 
     async def initialize(self):
         pass
 
-    async def add(self, conversation_id: str, chat_turn: ChatTurn):
-        self.messages.append(chat_turn)
+    async def add(self, conversation_id: str, chat_turn: ChatTurn) -> list[ChatTurn]:
+        self.chat_turns.append(chat_turn)
+        return self.chat_turns
 
     async def close(self):
-        self.messages.clear()
+        self.chat_turns.clear()

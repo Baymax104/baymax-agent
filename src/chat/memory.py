@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
 from typing import Self
 
+import ormsgpack
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from redis.asyncio import Redis
 
-from agent import Session
 from chat.models import ChatTurn, Conversation
 from chat.repository import InMemoryChatRepository, MongoDBChatRepository
 from config import Configuration, RedisConfig
@@ -20,6 +21,7 @@ class ChatMemory:
         else:
             raise NotImplementedError(f"{conversation.type} is not supported")
         self.redis = self.__init_redis(config.database.redis)
+        self.window_size = 5
 
     def __init_redis(self, config: RedisConfig):
         if not config.host or not config.port:
@@ -38,14 +40,31 @@ class ChatMemory:
         await self.redis.initialize()
 
     async def add(self, chat_turn: ChatTurn):
-        await self.repo.add(self.conversation.id, chat_turn)
-        # inactivate the cache
-        cache_key = f"agent:conversation:{self.conversation.id}"
-        if await self.redis.exists(cache_key):
-            await self.redis.delete(cache_key)
+        updated_content = await self.repo.add(self.conversation.id, chat_turn)
+        # update the cache if current conversation type is archive
+        if self.conversation.type == "archive":
+            cache_key = f"agent:conversation:{self.conversation.id}"
+            updated_conversation = self.conversation.model_copy(update={"content": updated_content})
+            encoded = ormsgpack.packb(updated_conversation.model_dump())
+            await self.redis.set(cache_key, encoded)
+        else:
+            self.conversation.content = updated_content
 
-    def get_session(self) -> Session:
-        ...
+    async def get_message_context(self) -> list[BaseMessage]:
+        if self.conversation.type == "archive":
+            conversation = await self.redis.get(f"agent:conversation:{self.conversation.id}")
+            conversation = ormsgpack.unpackb(conversation)
+            content = Conversation.model_validate(conversation).content
+        else:
+            content = self.conversation.content
+
+        message_window = content[-self.window_size:] if len(content) > self.window_size else content
+        context = []
+        for turn in message_window:
+            human_message = HumanMessage(turn.human_message.content)
+            ai_message = AIMessage(turn.ai_message.content)
+            context.extend([human_message, ai_message])
+        return context
 
     async def close(self):
         await self.repo.close()

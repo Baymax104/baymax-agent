@@ -16,7 +16,7 @@ class ChatRepository(ABC):
         ...
 
     @abstractmethod
-    async def add(self, conversation_id: str, chat_turn: ChatTurn):
+    async def add(self, conversation_id: str, chat_turn: ChatTurn) -> list[ChatTurn]:
         ...
 
     @abstractmethod

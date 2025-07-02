@@ -37,12 +37,13 @@ class MongoDBChatRepository(ChatRepository):
         except CollectionWasNotInitialized:
             return False
 
-    async def add(self, conversation_id: str, chat_turn: ChatTurn):
+    async def add(self, conversation_id: str, chat_turn: ChatTurn) -> list[ChatTurn]:
         chat_turn = chat_turn.model_dump()
         conversation = await Conversation.get(conversation_id)
         if not conversation:
             raise DatabaseError(f"Conversation {conversation_id} does not exist.")
-        await conversation.update({"$push": {Conversation.content: chat_turn}})
+        conversation = await conversation.update({"$push": {Conversation.content: chat_turn}})
+        return conversation.content
 
     async def close(self):
         if not self.is_external_connection:

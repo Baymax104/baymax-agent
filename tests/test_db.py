@@ -97,9 +97,10 @@ async def test_chat_memory_in_db():
                 human_message=Message(role="human", content="Hello human1"),
                 ai_message=Message(role="ai", content="Hello ai1"),
             )
-            # inactivate cache
+            # update cache
             await memory.add(chat_turn)
-        assert not await repo.redis.exists(f"agent:conversation:{conversation.id}")
+
+        assert await repo.redis.exists(f"agent:conversation:{conversation.id}")
 
         # activate cache
         conversation = await repo.get(conversation.id)
@@ -127,9 +128,10 @@ async def test_chat_memory_in_memory():
                 human_message=Message(role="human", content="Hello human1"),
                 ai_message=Message(role="ai", content="Hello ai1"),
             )
-            # inactivate cache
+            # update cache
             await memory.add(chat_turn)
-        assert not await repo.redis.exists(f"agent:conversation:{conversation.id}")
+
+        assert await repo.redis.exists(f"agent:conversation:{conversation.id}")
 
         # activate cache
         conversation = await repo.get(conversation.id)

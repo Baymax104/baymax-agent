@@ -1,6 +1,12 @@
 # -*- coding: UTF-8 -*-
-from agent import ToolAgent
-from chat.models import Conversation
+from typing import AsyncIterator, Self
+
+from langchain_core.messages import AnyMessage, HumanMessage
+
+from agent import Session, ToolAgent
+from chat import ChatTurn
+from chat.memory import ChatMemory
+from chat.models import Conversation, Message
 from config import Configuration
 from users import User
 
@@ -12,6 +18,35 @@ class ChatController:
         self.user = user
         self.config = config
         self.agent = ToolAgent(config)
+        self.memory = ChatMemory(conversation, config)
 
     async def start(self):
         await self.agent.initialize()
+        await self.memory.initialize()
+
+    async def chat(self, user_input: str) -> AsyncIterator[AnyMessage]:
+        context = await self.memory.get_message_context()
+        context.append(HumanMessage(user_input))
+        session = Session(
+            context=context,
+            user_instructions=self.user.instructions
+        )
+        state = await self.agent.chat(session)
+        ai_message = "".join(chunk.content async for chunk in state.stream)
+        chat_turn = ChatTurn(
+            human_message=Message(role="human", content=user_input),
+            ai_message=Message(role="ai", content=ai_message)
+        )
+        await self.memory.add(chat_turn)
+        return state.stream
+
+    async def finish(self):
+        await self.agent.close()
+        await self.memory.close()
+
+    async def __aenter__(self) -> Self:
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.finish()
