@@ -34,15 +34,15 @@ class BaseAgent(AsyncResource, ABC):
         self.mcp_client = await self.context.enter_async_context(self.mcp_client)
         if not await self.mcp_client.ping():
             raise MCPConnectionError(f"MCP server connection failed")
-        logger.success("MCP server connection established")
+        logger.debug("MCP server connection established")
 
     async def __ping_llm(self):
         response = await self.llm.generate_async([HumanMessage("Hello")])
         if not response.content:
             raise LLMConnectionError(f"LLM connection failed")
-        logger.success("LLM connection established")
+        logger.debug("LLM connection established")
 
     @logger.catch_exception(throw=True)
     async def close(self):
         await self.context.aclose()
-        logger.success(f"Agent closed successfully")
+        logger.debug(f"Agent closed successfully")

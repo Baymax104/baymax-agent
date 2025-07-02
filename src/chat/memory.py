@@ -2,12 +2,15 @@
 
 import ormsgpack
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
-from redis.asyncio import Redis
 
 from chat.models import ChatTurn, Conversation
 from chat.repository import InMemoryChatRepository, MongoDBChatRepository
-from config import Configuration, RedisConfig
-from utils import AsyncResource
+from config import Configuration
+from monitor import get_logger
+from utils import AsyncResource, init_redis
+
+
+logger = get_logger()
 
 
 class ChatMemory(AsyncResource):
@@ -20,24 +23,13 @@ class ChatMemory(AsyncResource):
             self.repo = InMemoryChatRepository(config)
         else:
             raise NotImplementedError(f"{conversation.type} is not supported")
-        self.redis = self.__init_redis(config.database.redis)
+        self.redis = init_redis(config.database.redis)
         self.window_size = 5
-
-    def __init_redis(self, config: RedisConfig):
-        if not config.host or not config.port:
-            raise ConnectionError("Host and port are required.")
-        db = config.db if config.db else 0
-        redis = Redis(
-            host=config.host,
-            port=config.port,
-            password=config.password,
-            db=db,
-        )
-        return redis
 
     async def initialize(self):
         await self.repo.initialize()
         await self.redis.initialize()
+        logger.debug("ChatMemory initialized")
 
     async def add(self, chat_turn: ChatTurn):
         updated_content = await self.repo.add(self.conversation.id, chat_turn)
@@ -47,8 +39,10 @@ class ChatMemory(AsyncResource):
             updated_conversation = self.conversation.model_copy(update={"content": updated_content})
             encoded = ormsgpack.packb(updated_conversation.model_dump())
             await self.redis.set(cache_key, encoded)
+            logger.debug(f"Added archive conversation {self.conversation.id}")
         else:
             self.conversation.content = updated_content
+            logger.debug(f"Added temporary conversation {self.conversation.id}")
 
     async def get_message_context(self) -> list[BaseMessage]:
         if self.conversation.type == "archive":
@@ -59,6 +53,7 @@ class ChatMemory(AsyncResource):
             content = self.conversation.content
 
         message_window = content[-self.window_size:] if len(content) > self.window_size else content
+        logger.debug(f"Message window: {message_window}")
         context = []
         for turn in message_window:
             human_message = HumanMessage(turn.human_message.content)
@@ -69,3 +64,4 @@ class ChatMemory(AsyncResource):
     async def close(self):
         await self.repo.close()
         await self.redis.aclose()
+        logger.debug("ChatMemory closed")

@@ -1,41 +1,23 @@
 # -*- coding: UTF-8 -*-
 from beanie import init_beanie
-from beanie.exceptions import CollectionWasNotInitialized
-from motor.motor_asyncio import AsyncIOMotorClient
 
 from chat.models import ChatTurn, ConversationDB
 from chat.repository.base import ChatRepository
-from config import Configuration, MongoDBConfig
+from config import Configuration
 from monitor import DatabaseError
+from utils import init_mongodb, is_connected
 
 
 class MongoDBChatRepository(ChatRepository):
 
     def __init__(self, config: Configuration):
         super().__init__(config)
-        self.mongodb = self.__init_mongodb(config.database.mongodb)
-        self.is_external_connection = self.__is_external_connection()
-
-    def __init_mongodb(self, config: MongoDBConfig):
-        if not config.host or not config.port:
-            raise ConnectionError("Host and port are required.")
-        if not config.db:
-            raise ConnectionError("Database is required.")
-        user_part = f"{config.user}:{config.password}@" if config.user else ""
-        uri = f"mongodb://{user_part}{config.host}:{config.port}"
-        client = AsyncIOMotorClient(uri)
-        return client
+        self.mongodb = init_mongodb(config.database.mongodb)
+        self.is_external_connection = is_connected(ConversationDB)
 
     async def initialize(self):
         if not self.is_external_connection:
             await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[ConversationDB])
-
-    def __is_external_connection(self) -> bool:
-        try:
-            ConversationDB.get_settings()
-            return True
-        except CollectionWasNotInitialized:
-            return False
 
     async def add(self, conversation_id: str, chat_turn: ChatTurn) -> list[ChatTurn]:
         chat_turn = chat_turn.model_dump()

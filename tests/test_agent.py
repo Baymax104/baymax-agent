@@ -37,6 +37,7 @@ async def test_chat_archive():
             response = chat_controller.chat("你好")
             async for message in response:
                 print(message, end="")
+            print()
 
 
 @mark.asyncio
@@ -50,3 +51,4 @@ async def test_chat_temporary():
             response = chat_controller.chat("你好")
             async for message in response:
                 print(message, end="")
+            print()

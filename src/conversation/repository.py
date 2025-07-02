@@ -2,43 +2,19 @@
 
 import ormsgpack
 from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
-from redis.asyncio import Redis
 
 from chat import Conversation, ConversationDB
-from config import Configuration, MongoDBConfig, RedisConfig
+from config import Configuration
 from monitor import DatabaseError
-from utils import AsyncResource
+from utils import AsyncResource, init_mongodb, init_redis
 
 
 class ConversationRepository(AsyncResource):
 
     def __init__(self, config: Configuration):
         self.config = config.database.mongodb
-        self.mongodb = self.__init_mongodb(config.database.mongodb)
-        self.redis = self.__init_redis(config.database.redis)
-
-    def __init_mongodb(self, config: MongoDBConfig):
-        if not config.host or not config.port:
-            raise ConnectionError("Host and port are required.")
-        if not config.db:
-            raise ConnectionError("Database is required.")
-        user_part = f"{config.user}:{config.password}@" if config.user else ""
-        uri = f"mongodb://{user_part}{config.host}:{config.port}"
-        client = AsyncIOMotorClient(uri)
-        return client
-
-    def __init_redis(self, config: RedisConfig):
-        if not config.host or not config.port:
-            raise ConnectionError("Host and port are required.")
-        db = config.db if config.db else 0
-        redis = Redis(
-            host=config.host,
-            port=config.port,
-            password=config.password,
-            db=db,
-        )
-        return redis
+        self.mongodb = init_mongodb(config.database.mongodb)
+        self.redis = init_redis(config.database.redis)
 
     async def initialize(self):
         await init_beanie(database=self.mongodb[self.config.db], document_models=[ConversationDB])
