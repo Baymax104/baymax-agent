@@ -29,6 +29,9 @@ class ConversationController:
     async def delete_conversation(self, conversation_id: str):
         await self.repo.delete(conversation_id)
 
+    async def get_conversation(self, conversation_id: str) -> Conversation | None:
+        return await self.repo.get(conversation_id)
+
     async def start_conversation(self, conversation_id: str) -> ChatController:
         conversation = await self.repo.get(conversation_id)
         if conversation is None:

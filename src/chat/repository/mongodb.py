@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
 from beanie import init_beanie
+from beanie.exceptions import CollectionWasNotInitialized
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from chat.memory.base import ChatRepository
 from chat.models import ChatTurn, Conversation
+from chat.repository.base import ChatRepository
 from config import Configuration, MongoDBConfig
 from monitor import DatabaseError
 
@@ -13,6 +14,7 @@ class MongoDBChatRepository(ChatRepository):
     def __init__(self, config: Configuration):
         super().__init__(config)
         self.mongodb = self.__init_mongodb(config.database.mongodb)
+        self.is_external_connection = self.__is_external_connection()
 
     def __init_mongodb(self, config: MongoDBConfig):
         if not config.host or not config.port:
@@ -25,7 +27,15 @@ class MongoDBChatRepository(ChatRepository):
         return client
 
     async def initialize(self):
-        await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[Conversation])
+        if not self.is_external_connection:
+            await init_beanie(self.mongodb[self.config.mongodb.db], document_models=[Conversation])
+
+    def __is_external_connection(self) -> bool:
+        try:
+            Conversation.get_settings()
+            return True
+        except CollectionWasNotInitialized:
+            return False
 
     async def add(self, conversation_id: str, chat_turn: ChatTurn):
         chat_turn = chat_turn.model_dump()
@@ -35,4 +45,5 @@ class MongoDBChatRepository(ChatRepository):
         await conversation.update({"$push": {Conversation.content: chat_turn}})
 
     async def close(self):
-        self.mongodb.close()
+        if not self.is_external_connection:
+            self.mongodb.close()

@@ -8,7 +8,7 @@ model:
 database:
   redis:
     host: localhost
-    port: 6378
+    port: 6379
 
   mongodb:
     host: localhost
