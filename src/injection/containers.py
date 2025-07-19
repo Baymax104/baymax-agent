@@ -51,8 +51,6 @@ class CurrentContainer(containers.DeclarativeContainer):
 
 
 class Container(containers.DeclarativeContainer):
-    wiring_config = containers.WiringConfiguration(packages=["cli"])
-
     configuration = providers.Object(ConfigManager.get_config())
 
     current: CurrentContainer = providers.Container(CurrentContainer)
