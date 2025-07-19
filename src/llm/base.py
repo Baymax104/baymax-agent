@@ -2,10 +2,14 @@
 from abc import ABC, abstractmethod
 from typing import AsyncIterator, Iterator, Self
 
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import AnyMessage, HumanMessage
 from mcp import Tool
 
 from config import ModelConfig
+from monitor import LLMConnectionError, get_logger
+
+
+logger = get_logger()
 
 
 class LLMProvider(ABC):
@@ -45,3 +49,9 @@ class LLMProvider(ABC):
     ) -> AnyMessage | AsyncIterator[AnyMessage]:
         """generate an AI message. if tools are provided, llm will use these tools in this generation."""
         ...
+
+    async def initialize(self):
+        response = await self.generate_async([HumanMessage("Hello")])
+        if not response.content:
+            raise LLMConnectionError(f"LLM connection failed")
+        logger.debug("LLM connection established")

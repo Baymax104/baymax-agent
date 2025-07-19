@@ -19,6 +19,8 @@ dependencies = [
     "ormsgpack>=1.10.0",
     "beanie>=1.30.0",
     "aiostream>=0.7.0",
+    "rich>=14.0.0",
+    "dependency-injector>=4.48.1",
 ]
 
 [[tool.uv.index]]

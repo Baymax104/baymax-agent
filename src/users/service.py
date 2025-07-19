@@ -1,22 +1,16 @@
 # -*- coding: UTF-8 -*-
-from config import Configuration
 from monitor import get_logger
-from users import User
+from users.models import User
 from users.repository import UserRepository
-from utils import AsyncResource
 
 
 logger = get_logger()
 
 
-class UserService(AsyncResource):
+class UserService:
 
-    def __init__(self, config: Configuration):
-        self.config = config
-        self.repo = UserRepository(config)
-
-    async def initialize(self):
-        await self.repo.initialize()
+    def __init__(self, repository: UserRepository):
+        self.repo = repository
 
     async def add(self, username: str, instructions: list[str]) -> str:
         user = User(name=username, instructions=instructions)
@@ -32,5 +26,8 @@ class UserService(AsyncResource):
     async def get(self, user_id: str) -> User | None:
         return await self.repo.get(user_id)
 
-    async def close(self):
-        await self.repo.close()
+    async def get_all(self) -> list[User]:
+        return await self.repo.get_all()
+
+    async def get_by_name(self, name: str) -> User | None:
+        return await self.repo.get_by_name(name)

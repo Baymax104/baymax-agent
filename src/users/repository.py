@@ -1,20 +1,10 @@
 # -*- coding: UTF-8 -*-
-from beanie import init_beanie
 
-from config import Configuration
 from monitor import DatabaseError
 from users.models import User, UserDB
-from utils import AsyncResource, init_mongodb
 
 
-class UserRepository(AsyncResource):
-
-    def __init__(self, config: Configuration):
-        self.config = config.database.mongodb
-        self.mongodb = init_mongodb(config.database.mongodb)
-
-    async def initialize(self):
-        await init_beanie(self.mongodb[self.config.db], document_models=[UserDB])
+class UserRepository:
 
     async def add(self, user: User):
         user = user.to_entity()
@@ -30,5 +20,11 @@ class UserRepository(AsyncResource):
         user = await UserDB.get(user_id)
         return user.to_domain() if user else None
 
-    async def close(self):
-        self.mongodb.close()
+    async def get_all(self) -> list[User]:
+        all_user = await UserDB.find_all().to_list()
+        all_user = [user.to_domain() for user in all_user]
+        return all_user
+
+    async def get_by_name(self, name: str) -> User | None:
+        user = await UserDB.find_one({"name": name})
+        return user.to_domain() if user else None

@@ -6,28 +6,27 @@ from langchain_core.messages import AnyMessage, HumanMessage
 from agent import Session, ToolAgent
 from chat.memory import ChatMemory
 from chat.models import ChatTurn, Conversation, Message
-from config import Configuration
 from monitor import get_logger
 from users import User
-from utils import AsyncResource
 
 
 logger = get_logger()
 
 
-class ChatController(AsyncResource):
+class ChatController:
 
-    def __init__(self, conversation: Conversation, user: User, config: Configuration):
+    def __init__(
+        self,
+        conversation: Conversation,
+        user: User,
+        agent: ToolAgent,
+        memory: ChatMemory,
+    ):
         self.conversation = conversation
         self.user = user
-        self.config = config
-        self.agent = ToolAgent(config)
-        self.memory = ChatMemory(conversation, config)
+        self.agent = agent
+        self.memory = memory
 
-    async def initialize(self):
-        await self.agent.initialize()
-        await self.memory.initialize()
-        logger.debug("ChatController initialized")
 
     async def chat(self, user_input: str) -> AsyncIterator[AnyMessage]:
         context = await self.memory.get_message_context()
@@ -49,7 +48,3 @@ class ChatController(AsyncResource):
         for chunk in ai_message_chunks:
             yield chunk
 
-    async def close(self):
-        await self.agent.close()
-        await self.memory.close()
-        logger.debug("ChatController closed")

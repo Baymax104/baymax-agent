@@ -3,27 +3,20 @@ from __future__ import annotations
 
 from typing import Literal
 
-from chat import ChatController, Conversation
-from config import Configuration
+from chat import Conversation
 from conversation.repository import ConversationRepository
-from monitor import ConversationNotFoundError, get_logger
+from monitor import get_logger
 from users import User
-from utils import AsyncResource
 
 
 logger = get_logger()
 
 
-class ConversationController(AsyncResource):
+class ConversationController:
 
-    def __init__(self, user: User, config: Configuration):
-        self.config = config
+    def __init__(self, user: User, repository: ConversationRepository):
         self.current_user = user
-        self.repo = ConversationRepository(config)
-
-    async def initialize(self):
-        await self.repo.initialize()
-        logger.debug("ConversationController initialized")
+        self.repo = repository
 
     async def create(
         self,
@@ -43,19 +36,5 @@ class ConversationController(AsyncResource):
     async def get(self, conversation_id: str) -> Conversation | None:
         return await self.repo.get(conversation_id)
 
-    @logger.catch_exception(throw=True)
-    async def start_conversation(self, conversation_id: str) -> ChatController:
-        conversation = await self.repo.get(conversation_id)
-        if conversation is None:
-            raise ConversationNotFoundError(f"Conversation with id {conversation_id} not found")
-        chat_controller = ChatController(
-            conversation=conversation,
-            user=self.current_user,
-            config=self.config
-        )
-        logger.debug(f"Started conversation: {conversation.id}")
-        return chat_controller
-
-    async def close(self):
-        await self.repo.close()
-        logger.debug("ConversationController closed")
+    async def get_all(self) -> list[Conversation]:
+        return await self.repo.get_all()

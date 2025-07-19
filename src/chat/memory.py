@@ -2,34 +2,28 @@
 
 import ormsgpack
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
+from redis.asyncio import Redis
 
 from chat.models import ChatTurn, Conversation
 from chat.repository import InMemoryChatRepository, MongoDBChatRepository
-from config import Configuration
 from monitor import get_logger
-from utils import AsyncResource, init_redis
 
 
 logger = get_logger()
 
 
-class ChatMemory(AsyncResource):
+class ChatMemory:
 
-    def __init__(self, conversation: Conversation, config: Configuration):
+    def __init__(self, conversation: Conversation, redis: Redis):
         self.conversation = conversation
+        self.redis = redis
+        self.window_size = 5
         if conversation.type == "archive":
-            self.repo = MongoDBChatRepository(config)
+            self.repo = MongoDBChatRepository()
         elif conversation.type == "temporary":
-            self.repo = InMemoryChatRepository(config)
+            self.repo = InMemoryChatRepository()
         else:
             raise NotImplementedError(f"{conversation.type} is not supported")
-        self.redis = init_redis(config.database.redis)
-        self.window_size = 5
-
-    async def initialize(self):
-        await self.repo.initialize()
-        await self.redis.initialize()
-        logger.debug("ChatMemory initialized")
 
     async def add(self, chat_turn: ChatTurn):
         updated_content = await self.repo.add(self.conversation.id, chat_turn)
@@ -61,7 +55,3 @@ class ChatMemory(AsyncResource):
             context.extend([human_message, ai_message])
         return context
 
-    async def close(self):
-        await self.repo.close()
-        await self.redis.aclose()
-        logger.debug("ChatMemory closed")
