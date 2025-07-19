@@ -43,8 +43,13 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 packages = [
-    "src/client",
+    "src/agent",
+    "src/chat",
     "src/config",
+    "src/conversation",
+    "src/injection",
+    "src/llm",
+    "src/monitor",
     "src/servers",
-    "src/ui"
+    "src/users",
 ]

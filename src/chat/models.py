@@ -23,7 +23,7 @@ class ConversationDB(Document):
     id: str = str(uuid4())
     user_id: str
     title: str
-    type: Literal["archive", "temporary"]
+    type: str
     create_at: float = time.time()
     content: list[ChatTurn] = []
 
@@ -40,7 +40,7 @@ class Conversation(BaseModel):
     id: str = str(uuid4())
     user_id: str
     title: str
-    type: Literal["archive", "temporary"]
+    type: str
     create_at: float = time.time()
     content: list[ChatTurn] = []
 

@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 from __future__ import annotations
 
-from typing import Literal
-
 from chat import Conversation
 from conversation.repository import ConversationRepository
 from monitor import get_logger
@@ -18,11 +16,7 @@ class ConversationController:
         self.current_user = user
         self.repo = repository
 
-    async def create(
-        self,
-        title: str = "",
-        conversation_type: Literal["archive", "temporary"] = "archive"
-    ) -> str:
+    async def create(self, title: str = "", conversation_type: str = "archive") -> str:
         conversation = Conversation(user_id=self.current_user.id, title=title, type=conversation_type)
         await self.repo.add(conversation)
         logger.debug(f"Created conversation: {conversation.id}")
