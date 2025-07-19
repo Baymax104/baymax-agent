@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
-from fastmcp.utilities.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
+from fastmcp.mcp_config import MCPConfig, RemoteMCPServer, StdioMCPServer
 from pydantic import BaseModel, ConfigDict, field_validator
 
 
