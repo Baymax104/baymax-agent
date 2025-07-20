@@ -56,7 +56,7 @@ class ToolAgent(BaseAgent):
         tool_call = function_call.tool_calls[0]
         logger.debug(f"Tool call: {tool_call}")
         result = await self.mcp_client.call_tool(tool_call["name"], tool_call["args"])
-        result = result[0]
+        result = result.content[0]
         if not isinstance(result, TextContent):
             raise MCPToolError(f"Tool call {tool_call['name']} returned {type(result)}")
         logger.debug(f"Tool execution result: {result}")

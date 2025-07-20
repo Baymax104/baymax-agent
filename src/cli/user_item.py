@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
 from rich.prompt import Prompt
 
+from cli.container import container
 from cli.menu import Menu
 from cli.prompt import error, print_dict, print_list, success
-from cli.service import container
 from users import UserService
 
 

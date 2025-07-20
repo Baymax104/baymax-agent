@@ -17,7 +17,7 @@ database:
 
 log:
   dir: ./logs
-  level: DEBUG
+  level: INFO
   rotation: 100MB
   retention: 10
 

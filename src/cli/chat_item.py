@@ -2,9 +2,9 @@
 from rich.prompt import Prompt
 
 from chat import ChatController
+from cli.container import container
 from cli.menu import Menu
 from cli.prompt import error, print_list, success
-from cli.service import container
 from conversation import ConversationController
 from users import UserService
 
@@ -65,3 +65,18 @@ async def start_conversation():
             print(message, end="")
         print()
     success("对话结束")
+
+
+@menu.action("删除对话")
+async def delete_conversation():
+    controller: ConversationController = await container.conversation_controller()
+    conversations = await controller.get_all()
+    conversation_infos = [f"[cyan]{conv.title}[/]({conv.id})" for conv in conversations]
+    print_list(conversation_infos, title="历史对话", show_header=False)
+    conversation_id = Prompt.ask("请输入对话ID")
+    conversation = next((conv for conv in conversations if conv.id == conversation_id), None)
+    if not conversation:
+        error(f"对话不存在")
+        return
+    await controller.delete(conversation.id)
+    success("删除成功")
