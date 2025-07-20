@@ -1,4 +1,6 @@
 # -*- coding: UTF-8 -*-
+import asyncio
+
 from rich.prompt import Prompt
 
 from chat import ChatController
@@ -62,7 +64,8 @@ async def start_conversation():
             break
         response = chat_controller.chat(user_input)
         async for message in response:
-            print(message, end="")
+            print(message, end="", flush=True)
+            await asyncio.sleep(0.1)
         print()
     success("对话结束")
 
